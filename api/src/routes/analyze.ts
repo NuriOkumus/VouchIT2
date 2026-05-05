@@ -17,13 +17,15 @@ const LANG_COLORS: Record<string, string> = {
 function langColor(name: string) { return LANG_COLORS[name] ?? "#7A7A82" }
 
 type GitHubRepo = { language: string | null; stargazers_count: number }
-type GitHubUser = { public_repos: number }
+type GitHubUser = { public_repos: number; avatar_url?: string; login?: string }
 
 async function fetchGitHubData(token: string): Promise<{
   langCounts: Record<string, number>
   langItems: LangItem[]
   repos: number
   stars: number
+  avatarUrl: string | undefined
+  username: string | undefined
 }> {
   try {
     const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
@@ -31,7 +33,7 @@ async function fetchGitHubData(token: string): Promise<{
       fetch("https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated", { headers }),
       fetch("https://api.github.com/user", { headers }),
     ])
-    if (!reposRes.ok) return { langCounts: {}, langItems: [], repos: 0, stars: 0 }
+    if (!reposRes.ok) return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }
 
     const repoData = await reposRes.json() as GitHubRepo[]
     const userData = userRes.ok ? await userRes.json() as GitHubUser : { public_repos: 0 }
@@ -59,9 +61,9 @@ async function fetchGitHubData(token: string): Promise<{
       langItems[langItems.length - 1].pct += 100 - pctSum
     }
 
-    return { langCounts, langItems, repos: userData.public_repos, stars }
+    return { langCounts, langItems, repos: userData.public_repos, stars, avatarUrl: userData.avatar_url, username: userData.login }
   } catch {
-    return { langCounts: {}, langItems: [], repos: 0, stars: 0 }
+    return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }
   }
 }
 
@@ -148,7 +150,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
 
     const [buffer, github] = await Promise.all([
       file.arrayBuffer(),
-      githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0 }),
+      githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }),
     ])
 
     const mimeType = file.type || "application/pdf"
@@ -172,6 +174,8 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       githubLanguages: github.langItems.length > 0 ? github.langItems : undefined,
       githubRepos: github.repos > 0 ? github.repos : undefined,
       githubStars: github.stars > 0 ? github.stars : undefined,
+      githubAvatar: github.avatarUrl,
+      githubUsername: github.username,
     }
 
     const [profile] = await db

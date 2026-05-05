@@ -17,6 +17,8 @@ export type ProfileMetadata = {
   githubLanguages?: LangItem[]
   githubRepos?: number
   githubStars?: number
+  githubAvatar?: string
+  githubUsername?: string
 }
 
 export type Profile = {

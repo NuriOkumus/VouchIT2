@@ -184,7 +184,12 @@ export default function ProfilePage() {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 36, fontWeight: 600, color: "white",
                 boxShadow: verified ? "0 0 24px rgba(124,255,178,0.25)" : "none",
-              }}>{initials}</div>
+                overflow: "hidden", position: "relative",
+              }}>
+                {meta.githubAvatar
+                  ? <img src={meta.githubAvatar} alt={profile.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />
+                  : initials}
+              </div>
             </div>
             <div style={{ marginTop: 50 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -208,7 +213,14 @@ export default function ProfilePage() {
                 {meta.title && <span>{meta.title}</span>}
                 {meta.title && meta.location && <span style={{ color: "var(--fg-4)" }}>·</span>}
                 {meta.location && <span>{meta.location}</span>}
-                {(meta.title || meta.location) && meta.githubRepos && <span style={{ color: "var(--fg-4)" }}>·</span>}
+                {(meta.title || meta.location) && meta.githubUsername && <span style={{ color: "var(--fg-4)" }}>·</span>}
+                {meta.githubUsername && (
+                  <a href={`https://github.com/${meta.githubUsername}`} target="_blank" rel="noreferrer"
+                    style={{ color: "var(--fg-3)", textDecoration: "none" }}>
+                    @{meta.githubUsername}
+                  </a>
+                )}
+                {(meta.title || meta.location || meta.githubUsername) && meta.githubRepos && <span style={{ color: "var(--fg-4)" }}>·</span>}
                 {meta.githubRepos && <span>{meta.githubRepos} repos</span>}
               </div>
             </div>
