@@ -5,11 +5,11 @@ import { getPendingUpload, clearPendingUpload } from "@/lib/upload-store"
 import { uploadCV } from "@/lib/api"
 
 const PHASES = [
-  { label: "Parsing CV",             detail: "Pages OCR'd, sections extracted" },
-  { label: "Scanning GitHub commits",detail: "Last 24 months · repos · commits" },
+  { label: "Parsing CV",             detail: "Pages extracted, sections identified" },
+  { label: "Scanning GitHub",        detail: "Last 24 months · repos · commits · stars" },
   { label: "Matching skills",        detail: "Repo languages ↔ CV claims" },
-  { label: "Translating profile",    detail: "Developer dialect ↔ Recruiter dialect" },
-  { label: "Building profile",       detail: "Computing evidence rings" },
+  { label: "Writing summary",        detail: "Technical bio, highlights, years of exp" },
+  { label: "Building profile",       detail: "Computing evidence rings · language mix" },
 ]
 
 const SAMPLE_LINES = [
@@ -50,9 +50,10 @@ export default function LoadingPage() {
   useEffect(() => {
     const pending = getPendingUpload()
     if (!pending) {
-      // No pending upload — just show demo after animation
+      // No pending upload — redirect to own profile if exists, else demo
+      const lastId = localStorage.getItem("lastProfileId")
       apiReadyRef.current = true
-      profileIdRef.current = "demo"
+      profileIdRef.current = lastId ?? "demo"
       return
     }
 
