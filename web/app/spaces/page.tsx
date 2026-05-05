@@ -158,7 +158,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
   }
 
   if (item.type === "verify") return (
-    <div className="verified-card" style={base}>
+    <div style={base}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <Avatar actor={item.who} />
         <div style={{ flex: 1, minWidth: 0 }}>
