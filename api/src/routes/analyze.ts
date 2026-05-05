@@ -1,11 +1,10 @@
 import { Hono } from "hono"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenAI } from "@google/genai"
 import { db } from "../db/index.js"
 import { profiles } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
 const PROMPT = `Analyze this CV/resume and return ONLY a valid JSON object (no markdown, no extra text):
 {
@@ -36,46 +35,57 @@ function parseGeminiJSON(text: string) {
 export const analyzeRouter = new Hono()
 
 analyzeRouter.post("/analyze-cv", async (c) => {
-  const body = await c.req.parseBody()
-  const file = body["cv"]
-  const userId = body["userId"] as string
+  try {
+    const body = await c.req.parseBody()
+    const file = body["cv"]
+    const userId = body["userId"] as string
 
-  if (!file || typeof file === "string") {
-    return c.json({ error: "CV dosyası gerekli" }, 400)
-  }
-  if (!userId) {
-    return c.json({ error: "userId gerekli" }, 400)
-  }
+    if (!file || typeof file === "string") {
+      return c.json({ error: "CV dosyası gerekli" }, 400)
+    }
+    if (!userId) {
+      return c.json({ error: "userId gerekli" }, 400)
+    }
 
-  const buffer = await file.arrayBuffer()
-  const base64 = Buffer.from(buffer).toString("base64")
-  const mimeType = (file.type || "application/pdf") as "application/pdf"
+    const buffer = await file.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString("base64")
+    const mimeType = (file.type || "application/pdf") as "application/pdf"
 
-  const result = await model.generateContent([
-    { inlineData: { data: base64, mimeType } },
-    PROMPT,
-  ])
-
-  const raw = result.response.text()
-  const data = parseGeminiJSON(raw) as {
-    name: string
-    developer_summary: string
-    hr_summary: string
-    skills: Array<{ name: string; level: "junior" | "mid" | "senior"; verified: boolean; evidenceCount: number }>
-  }
-
-  const [profile] = await db
-    .insert(profiles)
-    .values({
-      userId,
-      name: data.name,
-      developerSummary: data.developer_summary,
-      hrSummary: data.hr_summary,
-      skills: data.skills,
+    const result = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{
+        parts: [
+          { inlineData: { data: base64, mimeType } },
+          { text: PROMPT },
+        ],
+      }],
     })
-    .returning()
 
-  return c.json({ id: profile.id, ...data })
+    const raw = result.text ?? ""
+    const data = parseGeminiJSON(raw) as {
+      name: string
+      developer_summary: string
+      hr_summary: string
+      skills: Array<{ name: string; level: "junior" | "mid" | "senior"; verified: boolean; evidenceCount: number }>
+    }
+
+    const [profile] = await db
+      .insert(profiles)
+      .values({
+        userId,
+        name: data.name,
+        developerSummary: data.developer_summary,
+        hrSummary: data.hr_summary,
+        skills: data.skills,
+      })
+      .returning()
+
+    return c.json({ id: profile.id, ...data })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("[analyze-cv]", message)
+    return c.json({ error: message }, 500)
+  }
 })
 
 analyzeRouter.get("/profile/:id", async (c) => {
