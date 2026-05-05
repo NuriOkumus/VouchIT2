@@ -7,7 +7,8 @@ import type { LangItem } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 
 const require = createRequire(import.meta.url)
-const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>
+const _pdfMod = require("pdf-parse")
+const pdfParse = (typeof _pdfMod === "function" ? _pdfMod : _pdfMod.default) as (buf: Buffer) => Promise<{ text: string }>
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
