@@ -102,27 +102,26 @@ Rules for highlights:
 - Be specific, not generic`
 }
 
-async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
-  if (mimeType === "application/pdf" || mimeType.includes("pdf")) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = await import("pdf-parse") as any
-    const parse: (buf: Buffer) => Promise<{ text: string }> = typeof mod === "function" ? mod : (mod.default ?? mod)
-    const data = await parse(buffer)
-    return data.text.trim()
-  }
-  return buffer.toString("utf-8").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
-}
-
-async function callOpenAI(cvText: string, prompt: string): Promise<string> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{
-      role: "user",
-      content: `CV/Resume content:\n\n${cvText}\n\n---\n\n${prompt}`,
-    }],
-    max_tokens: 2000,
+async function callOpenAI(buffer: Buffer, mimeType: string, prompt: string): Promise<string> {
+  const uploadedFile = await openai.files.create({
+    file: new File([new Uint8Array(buffer)], "cv.pdf", { type: mimeType }),
+    purpose: "user_data",
   })
-  return response.choices[0]?.message?.content ?? ""
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{
+        role: "user",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        content: [{ type: "file", file: { file_id: uploadedFile.id } }, { type: "text", text: prompt }] as any,
+      }],
+      max_tokens: 2000,
+    })
+    return response.choices[0]?.message?.content ?? ""
+  } finally {
+    await openai.files.delete(uploadedFile.id).catch(() => null)
+  }
 }
 
 function parseGeminiJSON(text: string) {
@@ -153,9 +152,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     ])
 
     const mimeType = file.type || "application/pdf"
-    const cvText = await extractText(Buffer.from(buffer), mimeType)
-
-    const raw = await callOpenAI(cvText, buildPrompt(github.langCounts))
+    const raw = await callOpenAI(Buffer.from(buffer), mimeType, buildPrompt(github.langCounts))
     const data = parseGeminiJSON(raw) as {
       name: string
       title?: string
