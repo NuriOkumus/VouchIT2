@@ -52,7 +52,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const mimeType = (file.type || "application/pdf") as "application/pdf"
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       contents: [{
         parts: [
           { inlineData: { data: base64, mimeType } },
