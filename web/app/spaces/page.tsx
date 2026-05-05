@@ -76,10 +76,13 @@ export default function SpacesPage() {
   const [activeSpace, setActiveSpace] = useState("backend-tr")
   const [hovered, setHovered] = useState<number | null>(null)
   const [profileHref, setProfileHref] = useState("/p/demo")
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem("lastProfileId")
-    if (saved) setProfileHref(`/p/${saved}`)
+    const id = localStorage.getItem("lastProfileId")
+    const avatar = localStorage.getItem("lastProfileAvatar")
+    if (id) setProfileHref(`/p/${id}`)
+    if (avatar) setProfileAvatar(avatar)
   }, [])
 
   return (
@@ -116,7 +119,9 @@ export default function SpacesPage() {
             <span>Search skills, people, or repos…</span>
             <span style={{ marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 11, padding: "1px 6px", borderRadius: 4, background: "var(--bg-3)", color: "var(--fg-4)" }}>⌘K</span>
           </div>
-          <div style={{ width: 32, height: 32, borderRadius: 999, background: "linear-gradient(135deg, var(--mint), var(--violet))" }} />
+          <Link href={profileHref} style={{ display: "block", width: 32, height: 32, borderRadius: 999, overflow: "hidden", flexShrink: 0, background: "linear-gradient(135deg, var(--mint), var(--violet))" }}>
+            {profileAvatar && <img src={profileAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />}
+          </Link>
         </div>
       </header>
 

@@ -94,6 +94,7 @@ export default function ProfilePage() {
     getProfile(id).then((p) => {
       setProfile(p)
       localStorage.setItem("lastProfileId", id)
+      if (p.metadata?.githubAvatar) localStorage.setItem("lastProfileAvatar", p.metadata.githubAvatar)
     }).catch(() => setError("Profil yüklenemedi"))
   }, [id])
 
@@ -154,7 +155,16 @@ export default function ProfilePage() {
           <button className="btn" onClick={() => router.push("/spaces")} style={{ padding: "8px 14px", fontSize: 13 }}>
             Spaces feed →
           </button>
-          <div style={{ width: 32, height: 32, borderRadius: 999, background: "linear-gradient(135deg, var(--mint), var(--violet))" }} />
+          <div style={{
+            width: 32, height: 32, borderRadius: 999, overflow: "hidden", flexShrink: 0,
+            background: "linear-gradient(135deg, var(--mint), var(--violet))",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 600, color: "#0A0A0B",
+          }}>
+            {meta.githubAvatar
+              ? <img src={meta.githubAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />
+              : initials}
+          </div>
         </div>
       </header>
 
