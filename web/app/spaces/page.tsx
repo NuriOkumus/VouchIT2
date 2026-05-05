@@ -1,27 +1,29 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const SPACES = [
-  { id: "backend-tr",  name: "Backend",         count: 1284, dot: "var(--mint)"   },
-  { id: "ml-istanbul", name: "Machine Learning", count: 612,  dot: "var(--violet)" },
-  { id: "go-guild",    name: "Go Guild",         count: 487,  dot: "#00ADD8"       },
-  { id: "frontend-tr", name: "Frontend",         count: 943,  dot: "var(--amber)"  },
-  { id: "devops-tr",   name: "DevOps & SRE",     count: 358,  dot: "var(--rose)"   },
-  { id: "open-roles",  name: "Open Roles",       count: 96,   dot: "var(--fg-2)"   },
+  { id: "backend-tr",  name: "Backend",         count: 1284, dot: "var(--mint)",   desc: "Evidence-based community for backend engineers."         },
+  { id: "ml-istanbul", name: "Machine Learning", count: 612,  dot: "var(--violet)", desc: "ML practitioners, researchers and infra engineers."        },
+  { id: "go-guild",    name: "Go Guild",         count: 487,  dot: "#00ADD8",        desc: "Gophers building production systems in Go."               },
+  { id: "frontend-tr", name: "Frontend",         count: 943,  dot: "var(--amber)",  desc: "UI engineers focused on performance and craft."            },
+  { id: "devops-tr",   name: "DevOps & SRE",     count: 358,  dot: "var(--rose)",   desc: "Platform, infra, and reliability engineers."              },
+  { id: "open-roles",  name: "Open Roles",       count: 96,   dot: "var(--fg-2)",   desc: "Verified job postings matched to your skill profile."      },
 ]
 
 type FeedItem =
-  | { type: "push";    who: Actor; repo: string; branch: string; commits: number; message: string; time: string }
-  | { type: "pr";      who: Actor; repo: string; title: string; status: "open" | "merged"; time: string }
-  | { type: "release"; who: Actor; repo: string; version: string; desc: string; stars: number; time: string }
+  | { type: "push";    who: Actor; repo: string; branch: string; commits: number; message: string; time: string; years: number }
+  | { type: "pr";      who: Actor; repo: string; title: string; status: "open" | "merged"; time: string; years: number }
+  | { type: "release"; who: Actor; repo: string; version: string; desc: string; stars: number; time: string; years: number }
   | { type: "verify";  who: Actor; skills: string[]; langs: Lang[]; years: number; time: string }
   | { type: "join";    who: Actor; bio: string; skills: string[]; years: number; time: string }
   | { type: "role";    company: string; role: string; skills: string[]; match: number; time: string }
 
 type Actor = { initials: string; name: string; title: string; verified: boolean }
 type Lang  = { name: string; pct: number; color: string }
+type Filters = { verified: boolean; senior: boolean; available: boolean }
+type Sort = "activity" | "verified" | "senior"
 
 const FEED: FeedItem[] = [
   {
@@ -36,18 +38,18 @@ const FEED: FeedItem[] = [
     who: { initials: "OS", name: "Onur Şahin", title: "Principal Engineer · Berlin", verified: true },
     repo: "onursh/go-schema-registry", version: "v2.1.0",
     desc: "Add Avro union type support, fix confluent compat headers, 40% faster serialization.",
-    stars: 1284, time: "18m ago",
+    stars: 1284, time: "18m ago", years: 12,
   },
   {
     type: "pr",
     who: { initials: "EY", name: "Elif Yıldız", title: "Senior Backend Engineer · Izmir", verified: true },
-    repo: "insider/ml-serving", title: "feat: async cache warm-up on model load", status: "open", time: "1h ago",
+    repo: "insider/ml-serving", title: "feat: async cache warm-up on model load", status: "open", time: "1h ago", years: 6,
   },
   {
     type: "push",
     who: { initials: "MK", name: "Mert Kaya", title: "Staff Engineer · Ankara", verified: true },
     repo: "trendyol/order-router", branch: "hotfix/duplicate-events",
-    commits: 3, message: "fix: deduplicate order events on Kafka consumer restart", time: "2h ago",
+    commits: 3, message: "fix: deduplicate order events on Kafka consumer restart", time: "2h ago", years: 9,
   },
   {
     type: "join",
@@ -63,13 +65,13 @@ const FEED: FeedItem[] = [
   {
     type: "pr",
     who: { initials: "ZK", name: "Zeynep Koç", title: "Senior SRE · Istanbul", verified: true },
-    repo: "getir/platform", title: "chore: bump ArgoCD to 2.11, migrate app-of-apps", status: "merged", time: "5h ago",
+    repo: "getir/platform", title: "chore: bump ArgoCD to 2.11, migrate app-of-apps", status: "merged", time: "5h ago", years: 7,
   },
   {
     type: "push",
     who: { initials: "CU", name: "Can Uçar", title: "Backend Engineer · Istanbul", verified: true },
     repo: "peak/leaderboard-v2", branch: "feat/realtime-score-sync",
-    commits: 7, message: "perf: replace polling with WebSocket pub-sub, cut latency 200ms→12ms", time: "6h ago",
+    commits: 7, message: "perf: replace polling with WebSocket pub-sub, cut latency 200ms→12ms", time: "6h ago", years: 3,
   },
   {
     type: "verify",
@@ -78,7 +80,43 @@ const FEED: FeedItem[] = [
     langs: [{ name: "Python", pct: 71, color: "#3572A5" }, { name: "TypeScript", pct: 18, color: "#3178C6" }, { name: "Shell", pct: 11, color: "#89E051" }],
     years: 6, time: "8h ago",
   },
+  {
+    type: "role",
+    company: "Getir", role: "Staff Engineer — Platform",
+    skills: ["Go", "K8s", "Terraform", "Kafka"], match: 82, time: "10h ago",
+  },
+  {
+    type: "join",
+    who: { initials: "DA", name: "Deniz Aksoy", title: "Tech Lead · Istanbul", verified: false },
+    bio: "Tech lead @ Yapı Kredi. Leading migration of core banking services to microservices.",
+    skills: ["Java", "Spring Boot", "K8s", "Kafka"], years: 8, time: "12h ago",
+  },
 ]
+
+function passesFilters(item: FeedItem, f: Filters): boolean {
+  if (item.type === "role") return true
+  const verified = item.who.verified
+  const years = item.years
+  if (f.verified && !verified) return false
+  if (f.senior && years < 6) return false
+  if (f.available && item.type !== "join") return false
+  return true
+}
+
+function applySort(items: FeedItem[], sort: Sort): FeedItem[] {
+  if (sort === "activity") return items
+  if (sort === "verified") return [...items].sort((a, b) => {
+    const av = a.type !== "role" && a.who.verified ? 0 : 1
+    const bv = b.type !== "role" && b.who.verified ? 0 : 1
+    return av - bv
+  })
+  if (sort === "senior") return [...items].sort((a, b) => {
+    const ay = a.type === "role" ? 0 : a.years
+    const by = b.type === "role" ? 0 : b.years
+    return by - ay
+  })
+  return items
+}
 
 function Avatar({ actor, size = 40 }: { actor: Actor; size?: number }) {
   return (
@@ -134,16 +172,27 @@ function LangBar({ langs }: { langs: Lang[] }) {
   )
 }
 
-function CardActions({ onView }: { onView: () => void }) {
+function CardActions({ saved, vouched, onSave, onVouch, onView }: {
+  saved: boolean; vouched: boolean
+  onSave: () => void; onVouch: () => void; onView: () => void
+}) {
   return (
     <div style={{ display: "flex", gap: 6, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-      {[["◎ Save", false], ["◈ Vouch", false]].map(([label]) => (
-        <button key={String(label)} style={{
-          padding: "5px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--mono)",
-          background: "var(--bg-2)", border: "1px solid var(--line)", color: "var(--fg-3)", cursor: "pointer",
-        }}>{String(label)}</button>
-      ))}
-      <button onClick={onView} style={{
+      <button onClick={(e) => { e.stopPropagation(); onSave() }} style={{
+        padding: "5px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--mono)", cursor: "pointer",
+        background: saved ? "rgba(124,255,178,0.1)" : "var(--bg-2)",
+        border: `1px solid ${saved ? "rgba(124,255,178,0.3)" : "var(--line)"}`,
+        color: saved ? "var(--mint)" : "var(--fg-3)",
+        transition: "all .15s",
+      }}>{saved ? "✓ Saved" : "◎ Save"}</button>
+      <button onClick={(e) => { e.stopPropagation(); onVouch() }} style={{
+        padding: "5px 12px", borderRadius: 8, fontSize: 11, fontFamily: "var(--mono)", cursor: "pointer",
+        background: vouched ? "rgba(167,139,250,0.1)" : "var(--bg-2)",
+        border: `1px solid ${vouched ? "rgba(167,139,250,0.3)" : "var(--line)"}`,
+        color: vouched ? "var(--violet)" : "var(--fg-3)",
+        transition: "all .15s",
+      }}>{vouched ? "◈ Vouched" : "◈ Vouch"}</button>
+      <button onClick={(e) => { e.stopPropagation(); onView() }} style={{
         marginLeft: "auto", padding: "5px 14px", borderRadius: 8, fontSize: 11, fontFamily: "var(--mono)",
         background: "transparent", border: "1px solid var(--line)", color: "var(--fg-2)", cursor: "pointer",
       }}>view profile →</button>
@@ -151,11 +200,13 @@ function CardActions({ onView }: { onView: () => void }) {
   )
 }
 
-function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void }) {
-  const base: React.CSSProperties = {
-    padding: 18, borderRadius: 14,
-    background: "var(--bg-1)", border: "1px solid var(--line)",
-  }
+function FeedCard({ item, idx, saved, vouched, onSave, onVouch, onNavigate }: {
+  item: FeedItem; idx: number
+  saved: boolean; vouched: boolean
+  onSave: (i: number) => void; onVouch: (i: number) => void; onNavigate: () => void
+}) {
+  const actions = <CardActions saved={saved} vouched={vouched} onSave={() => onSave(idx)} onVouch={() => onVouch(idx)} onView={onNavigate} />
+  const base: React.CSSProperties = { padding: 18, borderRadius: 14, background: "var(--bg-1)", border: "1px solid var(--line)" }
 
   if (item.type === "verify") return (
     <div style={base}>
@@ -175,7 +226,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         <SkillChips skills={item.skills} />
         {item.langs.length > 0 && <LangBar langs={item.langs} />}
       </div>
-      <CardActions onView={onNavigate} />
+      {actions}
     </div>
   )
 
@@ -193,10 +244,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
           <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title}</div>
         </div>
       </div>
-      <div style={{
-        marginTop: 14, padding: "12px 14px", borderRadius: 10,
-        background: "var(--bg-2)", border: "1px solid var(--line)",
-      }}>
+      <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--line)" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--mono)", color: "var(--fg)" }}>{item.repo}</span>
           <span style={{
@@ -207,7 +255,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>{item.desc}</p>
         <div style={{ marginTop: 8, fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>★ {item.stars.toLocaleString()}</div>
       </div>
-      <CardActions onView={onNavigate} />
+      {actions}
     </div>
   )
 
@@ -239,7 +287,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         background: "var(--bg-2)", border: "1px solid var(--line)",
         fontSize: 13, color: "var(--fg)", fontFamily: "var(--mono)",
       }}>{item.title}</div>
-      <CardActions onView={onNavigate} />
+      {actions}
     </div>
   )
 
@@ -258,18 +306,15 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         </div>
       </div>
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", marginBottom: 6 }}>
-          {item.repo} · {item.branch}
-        </div>
+        <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", marginBottom: 6 }}>{item.repo} · {item.branch}</div>
         <div style={{
-          padding: "10px 12px", borderRadius: 8,
-          background: "var(--bg-2)", border: "1px solid var(--line)",
+          padding: "10px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--line)",
           fontSize: 12, color: "var(--fg-2)", fontFamily: "var(--mono)", lineHeight: 1.5,
         }}>
           <span style={{ color: "var(--fg-4)", marginRight: 8 }}>▸</span>{item.message}
         </div>
       </div>
-      <CardActions onView={onNavigate} />
+      {actions}
     </div>
   )
 
@@ -289,7 +334,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         </div>
       </div>
       <div style={{ marginTop: 12 }}><SkillChips skills={item.skills} /></div>
-      <CardActions onView={onNavigate} />
+      {actions}
     </div>
   )
 
@@ -314,7 +359,7 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
         }}>{item.match}% match</div>
       </div>
       <div style={{ marginTop: 12 }}><SkillChips skills={item.skills} /></div>
-      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(124,255,178,0.12)" }}>
         <button style={{
           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontFamily: "var(--mono)",
           background: "var(--mint)", border: "none", color: "#0A0A0B", cursor: "pointer", fontWeight: 600,
@@ -326,9 +371,15 @@ function FeedCard({ item, onNavigate }: { item: FeedItem; onNavigate: () => void
   return null
 }
 
+const SORT_LABELS: Record<Sort, string> = { activity: "activity ↓", verified: "verified first", senior: "senior first" }
+
 export default function SpacesPage() {
   const router = useRouter()
   const [activeSpace, setActiveSpace] = useState("backend-tr")
+  const [filters, setFilters] = useState<Filters>({ verified: true, senior: false, available: false })
+  const [sort, setSort] = useState<Sort>("activity")
+  const [saved, setSaved] = useState<Set<number>>(new Set())
+  const [vouched, setVouched] = useState<Set<number>>(new Set())
   const [profileHref, setProfileHref] = useState("/p/demo")
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
 
@@ -338,6 +389,37 @@ export default function SpacesPage() {
     if (id) setProfileHref(`/p/${id}`)
     if (avatar) setProfileAvatar(avatar)
   }, [])
+
+  function toggleFilter(key: keyof Filters) {
+    setFilters((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function toggleSaved(i: number) {
+    setSaved((prev) => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s })
+  }
+
+  function toggleVouched(i: number) {
+    setVouched((prev) => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s })
+  }
+
+  function cycleSort() {
+    const order: Sort[] = ["activity", "verified", "senior"]
+    setSort((prev) => order[(order.indexOf(prev) + 1) % order.length])
+  }
+
+  const visibleFeed = useMemo(() => {
+    const filtered = FEED.map((item, i) => ({ item, i })).filter(({ item }) => passesFilters(item, filters))
+    const sorted = applySort(filtered.map((x) => x.item), sort)
+    return sorted.map((item) => ({ item, i: FEED.indexOf(item) }))
+  }, [filters, sort])
+
+  const space = SPACES.find((s) => s.id === activeSpace)!
+
+  const FILTER_DEFS: { key: keyof Filters; label: string; activeLabel: string }[] = [
+    { key: "verified", label: "Verified only", activeLabel: "✓ Verified only" },
+    { key: "senior",   label: "Senior+",       activeLabel: "✓ Senior+"       },
+    { key: "available",label: "Available",     activeLabel: "✓ Available"     },
+  ]
 
   return (
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
@@ -362,10 +444,8 @@ export default function SpacesPage() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            width: 260, padding: "8px 12px", borderRadius: 10,
-            background: "var(--bg-2)", border: "1px solid var(--line)",
-            fontSize: 13, color: "var(--fg-3)",
+            display: "flex", alignItems: "center", gap: 8, width: 260, padding: "8px 12px", borderRadius: 10,
+            background: "var(--bg-2)", border: "1px solid var(--line)", fontSize: 13, color: "var(--fg-3)",
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
@@ -374,8 +454,7 @@ export default function SpacesPage() {
           </div>
           <Link href={profileHref} style={{
             display: "block", width: 32, height: 32, borderRadius: 999,
-            overflow: "hidden", flexShrink: 0,
-            background: "linear-gradient(135deg, var(--mint), var(--violet))",
+            overflow: "hidden", flexShrink: 0, background: "linear-gradient(135deg, var(--mint), var(--violet))",
           }}>
             {profileAvatar && <img src={profileAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />}
           </Link>
@@ -384,7 +463,7 @@ export default function SpacesPage() {
 
       <main style={{ flex: 1, display: "grid", gridTemplateColumns: "220px 1fr 300px", minHeight: 0 }}>
 
-        {/* Left rail — spaces */}
+        {/* Left rail */}
         <aside style={{ borderRight: "1px solid var(--line)", padding: "20px 14px", display: "flex", flexDirection: "column", gap: 4, overflow: "auto" }}>
           <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 8px 10px" }}>Spaces</div>
           {SPACES.map((s) => (
@@ -401,45 +480,66 @@ export default function SpacesPage() {
           ))}
           <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, paddingLeft: 10, paddingRight: 10 }}>
             <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>For you</div>
-            {[["Saved", "4"], ["Pending vouches", "2"]].map(([label, count]) => (
+            {([["Saved", saved.size], ["Pending vouches", vouched.size]] as [string, number][]).map(([label, count]) => (
               <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--fg-3)", marginBottom: 8 }}>
                 <span style={{ width: 14, height: 14, borderRadius: 4, background: "var(--bg-3)" }} />
                 {label}
-                <span style={{ marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 11, color: "var(--fg-4)" }}>{count}</span>
+                <span style={{
+                  marginLeft: "auto", fontFamily: "var(--mono)", fontSize: 11,
+                  color: count > 0 ? "var(--fg)" : "var(--fg-4)",
+                  fontWeight: count > 0 ? 600 : 400,
+                }}>{count}</span>
               </div>
             ))}
           </div>
         </aside>
 
-        {/* Center — feed */}
+        {/* Center feed */}
         <div className="scroll" style={{ padding: "24px 28px" }}>
-          {/* Space header */}
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
             <div>
               <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>
-                Backend
-                <span style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 400, marginLeft: 10, fontFamily: "var(--mono)" }}>1,284 builders</span>
+                {space.name}
+                <span style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 400, marginLeft: 10, fontFamily: "var(--mono)" }}>{space.count.toLocaleString()} builders</span>
               </h2>
-              <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 3 }}>Evidence-based community for backend engineers.</div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {[["✓ Verified only", true], ["Senior+", false], ["Available", false]].map(([label, active]) => (
-                <span key={String(label)} style={{
-                  padding: "5px 10px", borderRadius: 999, cursor: "pointer", fontSize: 11, fontFamily: "var(--mono)",
-                  background: active ? "rgba(124,255,178,0.1)" : "var(--bg-2)",
-                  border: `1px solid ${active ? "rgba(124,255,178,0.3)" : "var(--line)"}`,
-                  color: active ? "var(--mint)" : "var(--fg-2)", whiteSpace: "nowrap",
-                }}>{String(label)}</span>
-              ))}
+              <div style={{ fontSize: 13, color: "var(--fg-3)", marginTop: 3 }}>{space.desc}</div>
             </div>
           </div>
 
-          {/* Feed items */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {FEED.map((item, i) => (
-              <FeedCard key={i} item={item} onNavigate={() => router.push("/p/demo")} />
+          {/* Filter bar */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+            {FILTER_DEFS.map(({ key, label, activeLabel }) => (
+              <button key={key} onClick={() => toggleFilter(key)} style={{
+                padding: "5px 10px", borderRadius: 999, cursor: "pointer", fontSize: 11, fontFamily: "var(--mono)",
+                background: filters[key] ? "rgba(124,255,178,0.1)" : "var(--bg-2)",
+                border: `1px solid ${filters[key] ? "rgba(124,255,178,0.3)" : "var(--line)"}`,
+                color: filters[key] ? "var(--mint)" : "var(--fg-2)",
+                transition: "all .15s",
+              }}>{filters[key] ? activeLabel : label}</button>
             ))}
+            <button onClick={cycleSort} style={{
+              marginLeft: "auto", padding: "5px 10px", borderRadius: 999, cursor: "pointer",
+              fontSize: 11, fontFamily: "var(--mono)", background: "var(--bg-2)",
+              border: "1px solid var(--line)", color: "var(--fg-2)", transition: "all .15s",
+            }}>sort: <span style={{ color: "var(--fg)" }}>{SORT_LABELS[sort]}</span></button>
           </div>
+
+          {visibleFeed.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--fg-3)", fontFamily: "var(--mono)", fontSize: 13 }}>
+              No items match the current filters.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {visibleFeed.map(({ item, i }) => (
+                <FeedCard
+                  key={i} item={item} idx={i}
+                  saved={saved.has(i)} vouched={vouched.has(i)}
+                  onSave={toggleSaved} onVouch={toggleVouched}
+                  onNavigate={() => router.push("/p/demo")}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right rail */}
@@ -473,9 +573,9 @@ export default function SpacesPage() {
             <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Open roles · matched</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { company: "Trendyol", role: "Senior Backend Eng",  match: 94 },
-                { company: "Getir",    role: "Staff Engineer",       match: 82 },
-                { company: "Iyzico",   role: "Tech Lead, Payments",  match: 76 },
+                { company: "Trendyol", role: "Senior Backend Eng", match: 94 },
+                { company: "Getir",    role: "Staff Engineer",      match: 82 },
+                { company: "Iyzico",   role: "Tech Lead, Payments", match: 76 },
               ].map(({ company, role, match }) => (
                 <div key={company} style={{ padding: 12, borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--line)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
