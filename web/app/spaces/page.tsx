@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useMemo } from "react"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -380,14 +381,12 @@ export default function SpacesPage() {
   const [sort, setSort] = useState<Sort>("activity")
   const [saved, setSaved] = useState<Set<number>>(new Set())
   const [vouched, setVouched] = useState<Set<number>>(new Set())
+  const { data: session } = useSession()
   const [profileHref, setProfileHref] = useState("/p/demo")
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
 
   useEffect(() => {
     const id = localStorage.getItem("lastProfileId")
-    const avatar = localStorage.getItem("lastProfileAvatar")
     if (id) setProfileHref(`/p/${id}`)
-    if (avatar) setProfileAvatar(avatar)
   }, [])
 
   function toggleFilter(key: keyof Filters) {
@@ -456,7 +455,7 @@ export default function SpacesPage() {
             display: "block", width: 32, height: 32, borderRadius: 999,
             overflow: "hidden", flexShrink: 0, background: "linear-gradient(135deg, var(--mint), var(--violet))",
           }}>
-            {profileAvatar && <img src={profileAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />}
+            {session?.user?.image && <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />}
           </Link>
         </div>
       </header>

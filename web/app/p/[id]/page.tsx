@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { getProfile, type Profile } from "@/lib/api"
 
@@ -86,6 +87,7 @@ function Section({ title, subtitle, children, mono }: { title: string; subtitle?
 export default function ProfilePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { data: session } = useSession()
   const [profile, setProfile] = useState<Profile | null>(id === "demo" ? DEMO : null)
   const [error, setError] = useState<string | null>(null)
 
@@ -94,7 +96,6 @@ export default function ProfilePage() {
     getProfile(id).then((p) => {
       setProfile(p)
       localStorage.setItem("lastProfileId", id)
-      if (p.metadata?.githubAvatar) localStorage.setItem("lastProfileAvatar", p.metadata.githubAvatar)
     }).catch(() => setError("Profil yüklenemedi"))
   }, [id])
 
@@ -161,8 +162,8 @@ export default function ProfilePage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 12, fontWeight: 600, color: "#0A0A0B",
           }}>
-            {meta.githubAvatar
-              ? <img src={meta.githubAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />
+            {session?.user?.image
+              ? <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} referrerPolicy="no-referrer" />
               : initials}
           </div>
         </div>
