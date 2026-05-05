@@ -19,6 +19,7 @@ export type ProfileMetadata = {
   githubStars?: number
   githubAvatar?: string
   githubUsername?: string
+  githubContributions?: number[]
 }
 
 export type Profile = {

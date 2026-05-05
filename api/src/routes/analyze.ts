@@ -19,6 +19,8 @@ function langColor(name: string) { return LANG_COLORS[name] ?? "#7A7A82" }
 type GitHubRepo = { language: string | null; stargazers_count: number }
 type GitHubUser = { public_repos: number; avatar_url?: string; login?: string }
 
+const CONTRIB_QUERY = `{ viewer { contributionsCollection { contributionCalendar { weeks { contributionDays { contributionCount } } } } } }`
+
 async function fetchGitHubData(token: string): Promise<{
   langCounts: Record<string, number>
   langItems: LangItem[]
@@ -26,17 +28,33 @@ async function fetchGitHubData(token: string): Promise<{
   stars: number
   avatarUrl: string | undefined
   username: string | undefined
+  contributions: number[]
 }> {
   try {
     const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
-    const [reposRes, userRes] = await Promise.all([
+    const [reposRes, userRes, contribRes] = await Promise.all([
       fetch("https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated", { headers }),
       fetch("https://api.github.com/user", { headers }),
+      fetch("https://api.github.com/graphql", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ query: CONTRIB_QUERY }),
+      }),
     ])
-    if (!reposRes.ok) return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }
+    if (!reposRes.ok) return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined, contributions: [] }
 
     const repoData = await reposRes.json() as GitHubRepo[]
     const userData = userRes.ok ? await userRes.json() as GitHubUser : { public_repos: 0 }
+
+    // Parse contribution calendar → flat array of counts (last 26 weeks × 7 days)
+    let contributions: number[] = []
+    if (contribRes.ok) {
+      const gql = await contribRes.json() as { data?: { viewer?: { contributionsCollection?: { contributionCalendar?: { weeks?: Array<{ contributionDays: Array<{ contributionCount: number }> }> } } } } }
+      const weeks = gql.data?.viewer?.contributionsCollection?.contributionCalendar?.weeks ?? []
+      contributions = weeks.flatMap((w) => w.contributionDays.map((d) => d.contributionCount))
+      // Keep last 182 entries (26 weeks)
+      contributions = contributions.slice(-182)
+    }
 
     const langCounts: Record<string, number> = {}
     let stars = 0
@@ -61,9 +79,9 @@ async function fetchGitHubData(token: string): Promise<{
       langItems[langItems.length - 1].pct += 100 - pctSum
     }
 
-    return { langCounts, langItems, repos: userData.public_repos, stars, avatarUrl: userData.avatar_url, username: userData.login }
+    return { langCounts, langItems, repos: userData.public_repos, stars, avatarUrl: userData.avatar_url, username: userData.login, contributions }
   } catch {
-    return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }
+    return { langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined, contributions: [] }
   }
 }
 
@@ -150,7 +168,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
 
     const [buffer, github] = await Promise.all([
       file.arrayBuffer(),
-      githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined }),
+      githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0, avatarUrl: undefined, username: undefined, contributions: [] }),
     ])
 
     const mimeType = file.type || "application/pdf"
@@ -176,6 +194,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       githubStars: github.stars > 0 ? github.stars : undefined,
       githubAvatar: github.avatarUrl,
       githubUsername: github.username,
+      githubContributions: github.contributions.length > 0 ? github.contributions : undefined,
     }
 
     const [profile] = await db

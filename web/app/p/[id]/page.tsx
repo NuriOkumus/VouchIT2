@@ -39,14 +39,23 @@ const DEMO: Profile = {
   },
 }
 
-function Heatmap({ seed }: { seed: string }) {
-  const hash = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0)
-  const cells = Array.from({ length: 7 * 26 }, (_, i) => {
-    const v = ((hash + i * 9301 + 49297) % 233280) / 233280
-    const val = v * (1 + Math.sin((i + hash) / 8) * 0.5)
-    return Math.min(4, Math.floor(val * 5))
-  })
+function Heatmap({ seed, data }: { seed: string; data?: number[] }) {
   const colors = ["var(--bg-3)", "rgba(124,255,178,0.2)", "rgba(124,255,178,0.45)", "rgba(124,255,178,0.7)", "rgba(124,255,178,0.95)"]
+
+  let cells: number[]
+  if (data && data.length > 0) {
+    const max = Math.max(...data, 1)
+    // Pad to 182 if shorter
+    const padded = Array(Math.max(0, 182 - data.length)).fill(0).concat(data)
+    cells = padded.slice(-182).map((n) => Math.min(4, Math.ceil((n / max) * 4)))
+  } else {
+    const hash = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0)
+    cells = Array.from({ length: 182 }, (_, i) => {
+      const v = ((hash + i * 9301 + 49297) % 233280) / 233280
+      return Math.min(4, Math.floor(v * (1 + Math.sin((i + hash) / 8) * 0.5) * 5))
+    })
+  }
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(26, 1fr)", gridAutoRows: 12, gap: 3 }}>
       {cells.map((v, i) => (
@@ -298,7 +307,7 @@ export default function ProfilePage() {
           {/* Right col */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <Section title="Contributions" subtitle="last 12 months">
-              <Heatmap seed={profile.id} />
+              <Heatmap seed={profile.id} data={meta.githubContributions} />
               <div style={{ marginTop: 14, display: "flex", gap: 16, fontSize: 11, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>
                 {meta.githubRepos && <span><b style={{ color: "var(--fg)" }}>{meta.githubRepos}</b> repos</span>}
                 {meta.githubStars && <span><b style={{ color: "var(--fg)" }}>{meta.githubStars}</b> stars</span>}
