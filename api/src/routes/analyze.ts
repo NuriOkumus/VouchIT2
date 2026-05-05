@@ -2,27 +2,66 @@ import { Hono } from "hono"
 import { GoogleGenAI } from "@google/genai"
 import { db } from "../db/index.js"
 import { profiles } from "../db/schema.js"
+import type { LangItem } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
-type GitHubRepo = { language: string | null }
+const LANG_COLORS: Record<string, string> = {
+  JavaScript: "#F1E05A", TypeScript: "#3178C6", Python: "#3572A5",
+  Go: "#00ADD8", Rust: "#DEA584", Java: "#B07219", "C++": "#F34B7D",
+  "C#": "#178600", Ruby: "#701516", PHP: "#4F5D95", Swift: "#F05138",
+  Kotlin: "#A97BFF", Shell: "#89E051", HTML: "#E34C26", CSS: "#563D7C",
+  Vue: "#41B883", Dart: "#00B4AB", Scala: "#C22D40", "Jupyter Notebook": "#DA5B0B",
+}
+function langColor(name: string) { return LANG_COLORS[name] ?? "#7A7A82" }
 
-async function fetchGitHubLanguages(token: string): Promise<Record<string, number>> {
+type GitHubRepo = { language: string | null; stargazers_count: number }
+type GitHubUser = { public_repos: number }
+
+async function fetchGitHubData(token: string): Promise<{
+  langCounts: Record<string, number>
+  langItems: LangItem[]
+  repos: number
+  stars: number
+}> {
   try {
-    const res = await fetch(
-      "https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated",
-      { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
-    )
-    if (!res.ok) return {}
-    const repos = (await res.json()) as GitHubRepo[]
-    const counts: Record<string, number> = {}
-    for (const repo of repos) {
-      if (repo.language) counts[repo.language] = (counts[repo.language] ?? 0) + 1
+    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
+    const [reposRes, userRes] = await Promise.all([
+      fetch("https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated", { headers }),
+      fetch("https://api.github.com/user", { headers }),
+    ])
+    if (!reposRes.ok) return { langCounts: {}, langItems: [], repos: 0, stars: 0 }
+
+    const repoData = await reposRes.json() as GitHubRepo[]
+    const userData = userRes.ok ? await userRes.json() as GitHubUser : { public_repos: 0 }
+
+    const langCounts: Record<string, number> = {}
+    let stars = 0
+    for (const repo of repoData) {
+      if (repo.language) langCounts[repo.language] = (langCounts[repo.language] ?? 0) + 1
+      stars += repo.stargazers_count ?? 0
     }
-    return counts
+
+    const total = Object.values(langCounts).reduce((s, n) => s + n, 0)
+    const langItems: LangItem[] = Object.entries(langCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([name, count]) => ({
+        name,
+        pct: Math.round((count / total) * 100),
+        color: langColor(name),
+      }))
+
+    // Normalize to 100%
+    const pctSum = langItems.reduce((s, l) => s + l.pct, 0)
+    if (langItems.length > 0 && pctSum !== 100) {
+      langItems[langItems.length - 1].pct += 100 - pctSum
+    }
+
+    return { langCounts, langItems, repos: userData.public_repos, stars }
   } catch {
-    return {}
+    return { langCounts: {}, langItems: [], repos: 0, stars: 0 }
   }
 }
 
@@ -34,9 +73,13 @@ function buildPrompt(githubLangs: Record<string, number>): string {
 
   return `Analyze this CV/resume${githubSection ? " and GitHub data" : ""} and return ONLY a valid JSON object (no markdown, no extra text):
 {
-  "name": "full name",
+  "name": "full name from CV",
+  "title": "most recent job title (e.g. 'Senior Backend Engineer')",
+  "location": "city and country from CV, or 'Remote' if remote",
+  "years_experience": <number, e.g. 5.5>,
   "developer_summary": "2-3 sentences, technical language, specific technologies, years of experience",
   "hr_summary": "2-3 sentences, HR-friendly, soft skills, impact, career progression",
+  "highlights": ["top achievement from CV", "second achievement", "third achievement"],
   "skills": [
     {
       "name": "skill name",
@@ -52,7 +95,11 @@ Rules for skills:
 - level: junior <1yr, mid 1-3yr, senior 3+yr/leadership
 ${hasGitHub
     ? "- verified: true ONLY if the skill/language appears in GitHub stats\n- evidenceCount: GitHub repo count for that language (0 if not in GitHub)"
-    : "- verified: true if there is concrete CV evidence (projects, work exp)\n- evidenceCount: number of projects/roles mentioning this skill"}`
+    : "- verified: true if there is concrete CV evidence (projects, work exp)\n- evidenceCount: number of projects/roles mentioning this skill"}
+Rules for highlights:
+- 3 concrete, specific achievements from CV (metrics if available, e.g. 'Reduced p99 latency from 480ms to 95ms')
+- Use first-person omitted style (e.g. 'Built X that did Y')
+- Be specific, not generic`
 }
 
 async function callGeminiWithRetry(params: Parameters<typeof ai.models.generateContent>[0], maxRetries = 4) {
@@ -63,7 +110,7 @@ async function callGeminiWithRetry(params: Parameters<typeof ai.models.generateC
       const msg = err instanceof Error ? err.message : String(err)
       const isRetryable = msg.includes("503") || msg.includes("overloaded") || msg.includes("UNAVAILABLE")
       if (isRetryable && attempt < maxRetries - 1) {
-        const delay = 3000 * Math.pow(2, attempt) // 3s → 6s → 12s → 24s
+        const delay = 3000 * Math.pow(2, attempt)
         console.warn(`[gemini] 503 overloaded, retry ${attempt + 1}/${maxRetries - 1} in ${delay}ms`)
         await new Promise((r) => setTimeout(r, delay))
         continue
@@ -93,16 +140,12 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const userId = body["userId"] as string
     const githubToken = body["githubToken"] as string | undefined
 
-    if (!file || typeof file === "string") {
-      return c.json({ error: "CV dosyası gerekli" }, 400)
-    }
-    if (!userId) {
-      return c.json({ error: "userId gerekli" }, 400)
-    }
+    if (!file || typeof file === "string") return c.json({ error: "CV dosyası gerekli" }, 400)
+    if (!userId) return c.json({ error: "userId gerekli" }, 400)
 
-    const [buffer, githubLangs] = await Promise.all([
+    const [buffer, github] = await Promise.all([
       file.arrayBuffer(),
-      githubToken ? fetchGitHubLanguages(githubToken) : Promise.resolve({}),
+      githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0 }),
     ])
 
     const base64 = Buffer.from(buffer).toString("base64")
@@ -113,7 +156,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       contents: [{
         parts: [
           { inlineData: { data: base64, mimeType } },
-          { text: buildPrompt(githubLangs) },
+          { text: buildPrompt(github.langCounts) },
         ],
       }],
     })
@@ -121,9 +164,23 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const raw = result.text ?? ""
     const data = parseGeminiJSON(raw) as {
       name: string
+      title?: string
+      location?: string
+      years_experience?: number
       developer_summary: string
       hr_summary: string
+      highlights?: string[]
       skills: Array<{ name: string; level: "junior" | "mid" | "senior"; verified: boolean; evidenceCount: number }>
+    }
+
+    const metadata = {
+      title: data.title,
+      location: data.location,
+      yearsExperience: data.years_experience,
+      highlights: data.highlights,
+      githubLanguages: github.langItems.length > 0 ? github.langItems : undefined,
+      githubRepos: github.repos > 0 ? github.repos : undefined,
+      githubStars: github.stars > 0 ? github.stars : undefined,
     }
 
     const [profile] = await db
@@ -134,10 +191,11 @@ analyzeRouter.post("/analyze-cv", async (c) => {
         developerSummary: data.developer_summary,
         hrSummary: data.hr_summary,
         skills: data.skills,
+        metadata,
       })
       .returning()
 
-    return c.json({ id: profile.id, ...data })
+    return c.json({ id: profile.id, name: data.name, developer_summary: data.developer_summary, hr_summary: data.hr_summary, skills: data.skills, metadata })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error("[analyze-cv]", message)
@@ -147,12 +205,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
 
 analyzeRouter.get("/profile/:id", async (c) => {
   const id = c.req.param("id")
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, id))
-    .limit(1)
-
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, id)).limit(1)
   if (!profile) return c.json({ error: "Profil bulunamadı" }, 404)
 
   return c.json({
@@ -161,20 +214,15 @@ analyzeRouter.get("/profile/:id", async (c) => {
     developer_summary: profile.developerSummary,
     hr_summary: profile.hrSummary,
     skills: profile.skills,
+    metadata: profile.metadata ?? {},
   })
 })
 
 analyzeRouter.get("/profiles", async (c) => {
   const rows = await db
-    .select({
-      id: profiles.id,
-      name: profiles.name,
-      skills: profiles.skills,
-      createdAt: profiles.createdAt,
-    })
+    .select({ id: profiles.id, name: profiles.name, skills: profiles.skills, createdAt: profiles.createdAt })
     .from(profiles)
     .orderBy(profiles.createdAt)
     .limit(50)
-
   return c.json(rows)
 })

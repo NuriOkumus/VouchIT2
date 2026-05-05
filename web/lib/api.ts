@@ -7,19 +7,28 @@ export type Skill = {
   evidenceCount: number
 }
 
+export type LangItem = { name: string; pct: number; color: string }
+
+export type ProfileMetadata = {
+  title?: string
+  location?: string
+  yearsExperience?: number
+  highlights?: string[]
+  githubLanguages?: LangItem[]
+  githubRepos?: number
+  githubStars?: number
+}
+
 export type Profile = {
   id: string
   name: string
   developer_summary: string
   hr_summary: string
   skills: Skill[]
+  metadata?: ProfileMetadata
 }
 
-export async function uploadCV(
-  file: File,
-  userId: string,
-  githubToken?: string
-): Promise<Profile> {
+export async function uploadCV(file: File, userId: string, githubToken?: string): Promise<Profile> {
   const form = new FormData()
   form.append("cv", file)
   form.append("userId", userId)

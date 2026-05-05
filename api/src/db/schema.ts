@@ -7,6 +7,18 @@ export type Skill = {
   evidenceCount: number
 }
 
+export type LangItem = { name: string; pct: number; color: string }
+
+export type ProfileMetadata = {
+  title?: string
+  location?: string
+  yearsExperience?: number
+  highlights?: string[]
+  githubLanguages?: LangItem[]
+  githubRepos?: number
+  githubStars?: number
+}
+
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -22,5 +34,6 @@ export const profiles = pgTable("profiles", {
   developerSummary: text("developer_summary").notNull(),
   hrSummary: text("hr_summary").notNull(),
   skills: jsonb("skills").$type<Skill[]>().notNull(),
+  metadata: jsonb("metadata").$type<ProfileMetadata>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
