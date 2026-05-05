@@ -15,10 +15,16 @@ export type Profile = {
   skills: Skill[]
 }
 
-export async function uploadCV(file: File, userId: string): Promise<Profile> {
+export async function uploadCV(
+  file: File,
+  userId: string,
+  githubToken?: string
+): Promise<Profile> {
   const form = new FormData()
   form.append("cv", file)
   form.append("userId", userId)
+  if (githubToken) form.append("githubToken", githubToken)
+
   const res = await fetch(`${API_BASE}/analyze-cv`, { method: "POST", body: form })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))

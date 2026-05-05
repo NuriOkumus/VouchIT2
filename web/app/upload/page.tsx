@@ -28,7 +28,7 @@ export default function UploadPage() {
     setLoading(true)
     setError(null)
     try {
-      const profile = await uploadCV(file, session.user.email)
+      const profile = await uploadCV(file, session.user.email, session.accessToken)
       router.push(`/p/${profile.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu")

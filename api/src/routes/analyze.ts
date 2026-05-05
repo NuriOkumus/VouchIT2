@@ -6,10 +6,36 @@ import { eq } from "drizzle-orm"
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
-const PROMPT = `Analyze this CV/resume and return ONLY a valid JSON object (no markdown, no extra text):
+type GitHubRepo = { language: string | null }
+
+async function fetchGitHubLanguages(token: string): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(
+      "https://api.github.com/user/repos?per_page=100&affiliation=owner&sort=updated",
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
+    )
+    if (!res.ok) return {}
+    const repos = (await res.json()) as GitHubRepo[]
+    const counts: Record<string, number> = {}
+    for (const repo of repos) {
+      if (repo.language) counts[repo.language] = (counts[repo.language] ?? 0) + 1
+    }
+    return counts
+  } catch {
+    return {}
+  }
+}
+
+function buildPrompt(githubLangs: Record<string, number>): string {
+  const hasGitHub = Object.keys(githubLangs).length > 0
+  const githubSection = hasGitHub
+    ? `\nDeveloper's real GitHub language stats (language → repo count): ${JSON.stringify(githubLangs)}`
+    : ""
+
+  return `Analyze this CV/resume${githubSection ? " and GitHub data" : ""} and return ONLY a valid JSON object (no markdown, no extra text):
 {
   "name": "full name",
-  "developer_summary": "2-3 sentences, technical language, specific technologies, years of experience, notable achievements",
+  "developer_summary": "2-3 sentences, technical language, specific technologies, years of experience",
   "hr_summary": "2-3 sentences, HR-friendly, soft skills, impact, career progression",
   "skills": [
     {
@@ -20,7 +46,14 @@ const PROMPT = `Analyze this CV/resume and return ONLY a valid JSON object (no m
     }
   ]
 }
-Include 5-10 most prominent technical skills. Level: junior < 1yr/little evidence, mid 1-3yr, senior 3+yr/leadership.`
+${githubSection}
+Rules for skills:
+- Include 5-10 most prominent technical skills from the CV
+- level: junior <1yr, mid 1-3yr, senior 3+yr/leadership
+${hasGitHub
+    ? "- verified: true ONLY if the skill/language appears in GitHub stats\n- evidenceCount: GitHub repo count for that language (0 if not in GitHub)"
+    : "- verified: true if there is concrete CV evidence (projects, work exp)\n- evidenceCount: number of projects/roles mentioning this skill"}`
+}
 
 function parseGeminiJSON(text: string) {
   return JSON.parse(
@@ -39,6 +72,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const body = await c.req.parseBody()
     const file = body["cv"]
     const userId = body["userId"] as string
+    const githubToken = body["githubToken"] as string | undefined
 
     if (!file || typeof file === "string") {
       return c.json({ error: "CV dosyası gerekli" }, 400)
@@ -47,7 +81,11 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       return c.json({ error: "userId gerekli" }, 400)
     }
 
-    const buffer = await file.arrayBuffer()
+    const [buffer, githubLangs] = await Promise.all([
+      file.arrayBuffer(),
+      githubToken ? fetchGitHubLanguages(githubToken) : Promise.resolve({}),
+    ])
+
     const base64 = Buffer.from(buffer).toString("base64")
     const mimeType = (file.type || "application/pdf") as "application/pdf"
 
@@ -56,7 +94,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       contents: [{
         parts: [
           { inlineData: { data: base64, mimeType } },
-          { text: PROMPT },
+          { text: buildPrompt(githubLangs) },
         ],
       }],
     })
