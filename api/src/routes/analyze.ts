@@ -1,14 +1,9 @@
 import { Hono } from "hono"
 import OpenAI from "openai"
-import { createRequire } from "module"
 import { db } from "../db/index.js"
 import { profiles } from "../db/schema.js"
 import type { LangItem } from "../db/schema.js"
 import { eq } from "drizzle-orm"
-
-const require = createRequire(import.meta.url)
-const _pdfMod = require("pdf-parse")
-const pdfParse = (typeof _pdfMod === "function" ? _pdfMod : _pdfMod.default) as (buf: Buffer) => Promise<{ text: string }>
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
@@ -109,10 +104,12 @@ Rules for highlights:
 
 async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === "application/pdf" || mimeType.includes("pdf")) {
-    const data = await pdfParse(buffer)
-    return data.text
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await import("pdf-parse") as any
+    const parse: (buf: Buffer) => Promise<{ text: string }> = typeof mod === "function" ? mod : (mod.default ?? mod)
+    const data = await parse(buffer)
+    return data.text.trim()
   }
-  // DOCX: plain text fallback (strip XML tags)
   return buffer.toString("utf-8").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 }
 
