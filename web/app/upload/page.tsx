@@ -211,20 +211,20 @@ export default function UploadPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
                 {
-                  icon: "◈", color: "var(--mint)", title: "Verified skill profile",
-                  desc: "Skills ranked by level with evidence count from your GitHub repos.",
-                },
-                {
-                  icon: "⬡", color: "var(--violet)", title: "Developer + HR summary",
-                  desc: "Two tailored views — technical depth for devs, soft-skill focus for recruiters.",
-                },
-                {
-                  icon: "◎", color: "#00ADD8", title: "GitHub activity heatmap",
-                  desc: "Real contribution calendar, language mix, and repo stats.",
+                  icon: "◈", color: "var(--mint)", title: "Verified skill badges",
+                  desc: "Skills auto-levelled from your CV, cross-checked against your GitHub repos.",
                 },
                 {
                   icon: "▸", color: "var(--amber)", title: "Career highlights",
-                  desc: "Top 3 achievements extracted from your CV with metrics.",
+                  desc: "Top 3 concrete achievements pulled from your CV — metrics included where available.",
+                },
+                {
+                  icon: "◎", color: "#00ADD8", title: "GitHub activity heatmap",
+                  desc: "Real contribution calendar, language breakdown, repo count and star total.",
+                },
+                {
+                  icon: "⬡", color: "var(--violet)", title: "Developer identity card",
+                  desc: "Title, location, years of experience and a technical summary — shareable as a link.",
                 },
               ].map(({ icon, color, title, desc }) => (
                 <div key={title} style={{
