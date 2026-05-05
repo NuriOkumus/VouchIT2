@@ -10,12 +10,11 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@google/genai": "^1.52.0",
-    "@google/generative-ai": "^0.24.1",
     "@hono/node-server": "^1.19.14",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.17",
+    "openai": "^6.36.0",
     "pg": "^8.20.0"
   },
   "devDependencies": {

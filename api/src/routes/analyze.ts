@@ -1,11 +1,11 @@
 import { Hono } from "hono"
-import { GoogleGenAI } from "@google/genai"
+import OpenAI from "openai"
 import { db } from "../db/index.js"
 import { profiles } from "../db/schema.js"
 import type { LangItem } from "../db/schema.js"
 import { eq } from "drizzle-orm"
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 const LANG_COLORS: Record<string, string> = {
   JavaScript: "#F1E05A", TypeScript: "#3178C6", Python: "#3572A5",
@@ -102,23 +102,24 @@ Rules for highlights:
 - Be specific, not generic`
 }
 
-async function callGeminiWithRetry(params: Parameters<typeof ai.models.generateContent>[0], maxRetries = 4) {
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await ai.models.generateContent(params)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      const isRetryable = msg.includes("503") || msg.includes("overloaded") || msg.includes("UNAVAILABLE")
-      if (isRetryable && attempt < maxRetries - 1) {
-        const delay = 3000 * Math.pow(2, attempt)
-        console.warn(`[gemini] 503 overloaded, retry ${attempt + 1}/${maxRetries - 1} in ${delay}ms`)
-        await new Promise((r) => setTimeout(r, delay))
-        continue
-      }
-      throw err
-    }
-  }
-  throw new Error("Gemini: max retries exceeded")
+async function callOpenAI(base64: string, mimeType: string, prompt: string): Promise<string> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" },
+          },
+          { type: "text", text: prompt },
+        ],
+      },
+    ],
+    max_tokens: 2000,
+  })
+  return response.choices[0]?.message?.content ?? ""
 }
 
 function parseGeminiJSON(text: string) {
@@ -151,17 +152,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const base64 = Buffer.from(buffer).toString("base64")
     const mimeType = (file.type || "application/pdf") as "application/pdf"
 
-    const result = await callGeminiWithRetry({
-      model: "gemini-2.5-flash",
-      contents: [{
-        parts: [
-          { inlineData: { data: base64, mimeType } },
-          { text: buildPrompt(github.langCounts) },
-        ],
-      }],
-    })
-
-    const raw = result.text ?? ""
+    const raw = await callOpenAI(base64, mimeType, buildPrompt(github.langCounts))
     const data = parseGeminiJSON(raw) as {
       name: string
       title?: string
