@@ -1,9 +1,13 @@
 import { Hono } from "hono"
 import OpenAI from "openai"
+import { createRequire } from "module"
 import { db } from "../db/index.js"
 import { profiles } from "../db/schema.js"
 import type { LangItem } from "../db/schema.js"
 import { eq } from "drizzle-orm"
+
+const require = createRequire(import.meta.url)
+const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
@@ -102,21 +106,22 @@ Rules for highlights:
 - Be specific, not generic`
 }
 
-async function callOpenAI(base64: string, mimeType: string, prompt: string): Promise<string> {
+async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
+  if (mimeType === "application/pdf" || mimeType.includes("pdf")) {
+    const data = await pdfParse(buffer)
+    return data.text
+  }
+  // DOCX: plain text fallback (strip XML tags)
+  return buffer.toString("utf-8").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+}
+
+async function callOpenAI(cvText: string, prompt: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "image_url",
-            image_url: { url: `data:${mimeType};base64,${base64}`, detail: "high" },
-          },
-          { type: "text", text: prompt },
-        ],
-      },
-    ],
+    messages: [{
+      role: "user",
+      content: `CV/Resume content:\n\n${cvText}\n\n---\n\n${prompt}`,
+    }],
     max_tokens: 2000,
   })
   return response.choices[0]?.message?.content ?? ""
@@ -149,10 +154,10 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       githubToken ? fetchGitHubData(githubToken) : Promise.resolve({ langCounts: {}, langItems: [], repos: 0, stars: 0 }),
     ])
 
-    const base64 = Buffer.from(buffer).toString("base64")
-    const mimeType = (file.type || "application/pdf") as "application/pdf"
+    const mimeType = file.type || "application/pdf"
+    const cvText = await extractText(Buffer.from(buffer), mimeType)
 
-    const raw = await callOpenAI(base64, mimeType, buildPrompt(github.langCounts))
+    const raw = await callOpenAI(cvText, buildPrompt(github.langCounts))
     const data = parseGeminiJSON(raw) as {
       name: string
       title?: string
