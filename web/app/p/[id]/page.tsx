@@ -91,7 +91,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (id === "demo") return
-    getProfile(id).then(setProfile).catch(() => setError("Profil yüklenemedi"))
+    getProfile(id).then((p) => {
+      setProfile(p)
+      localStorage.setItem("lastProfileId", id)
+    }).catch(() => setError("Profil yüklenemedi"))
   }, [id])
 
   if (error) {
@@ -297,11 +300,6 @@ export default function ProfilePage() {
               </div>
             </Section>
 
-            <Section title="Recruiter view" subtitle="HR summary">
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: "var(--fg-2)" }}>
-                {profile.hr_summary}
-              </p>
-            </Section>
           </div>
 
           {/* Right col */}
