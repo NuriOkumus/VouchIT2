@@ -55,6 +55,25 @@ ${hasGitHub
     : "- verified: true if there is concrete CV evidence (projects, work exp)\n- evidenceCount: number of projects/roles mentioning this skill"}`
 }
 
+async function callGeminiWithRetry(params: Parameters<typeof ai.models.generateContent>[0], maxRetries = 4) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await ai.models.generateContent(params)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      const isRetryable = msg.includes("503") || msg.includes("overloaded") || msg.includes("UNAVAILABLE")
+      if (isRetryable && attempt < maxRetries - 1) {
+        const delay = 3000 * Math.pow(2, attempt) // 3s → 6s → 12s → 24s
+        console.warn(`[gemini] 503 overloaded, retry ${attempt + 1}/${maxRetries - 1} in ${delay}ms`)
+        await new Promise((r) => setTimeout(r, delay))
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error("Gemini: max retries exceeded")
+}
+
 function parseGeminiJSON(text: string) {
   return JSON.parse(
     text.trim()
@@ -89,7 +108,7 @@ analyzeRouter.post("/analyze-cv", async (c) => {
     const base64 = Buffer.from(buffer).toString("base64")
     const mimeType = (file.type || "application/pdf") as "application/pdf"
 
-    const result = await ai.models.generateContent({
+    const result = await callGeminiWithRetry({
       model: "gemini-2.5-flash",
       contents: [{
         parts: [
