@@ -1,21 +1,39 @@
 "use client"
 import { useSession } from "next-auth/react"
 import { useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Upload } from "lucide-react"
+import { Upload, Loader2 } from "lucide-react"
+import { uploadCV } from "@/lib/api"
 
 export default function UploadPage() {
   const { data: session, status } = useSession()
   const [file, setFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="animate-spin text-emerald-500" size={32} />
       </div>
     )
+  }
+
+  async function handleSubmit() {
+    if (!file || !session?.user?.email) return
+    setLoading(true)
+    setError(null)
+    try {
+      const profile = await uploadCV(file, session.user.email)
+      router.push(`/p/${profile.id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu")
+      setLoading(false)
+    }
   }
 
   return (
@@ -27,7 +45,7 @@ export default function UploadPage() {
         </div>
         <Card
           className="border-2 border-dashed border-zinc-200 rounded-xl p-12 flex flex-col items-center gap-4 cursor-pointer hover:border-emerald-400 transition-colors"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => !loading && inputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault()
@@ -47,12 +65,18 @@ export default function UploadPage() {
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </Card>
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <Button
           className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-          disabled={!file}
-          onClick={() => console.log("upload", file?.name, session?.user?.email)}
+          disabled={!file || loading}
+          onClick={handleSubmit}
         >
-          Analiz Et
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" />
+              Analiz ediliyor...
+            </span>
+          ) : "Analiz Et"}
         </Button>
       </div>
     </main>
