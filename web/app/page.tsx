@@ -2,17 +2,34 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 
-function Logo({ size = 22 }: { size?: number }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <path d="M3 4 L12 20 L21 4" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx="12" cy="12" r="2" fill="var(--mint)" />
-      </svg>
-      <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.02em" }}>VouchIT</span>
-    </div>
-  )
-}
+const FEATURES = [
+  {
+    icon: "◈", color: "var(--mint)",
+    title: "Verified skills",
+    desc: "Skills extracted from your CV, cross-checked against real GitHub repo activity. Not self-reported.",
+  },
+  {
+    icon: "◎", color: "#00ADD8",
+    title: "GitHub heatmap",
+    desc: "Real contribution calendar, language breakdown, repo count and stars — pulled live from your account.",
+  },
+  {
+    icon: "▸", color: "var(--amber)",
+    title: "Career highlights",
+    desc: "Top 3 concrete achievements extracted from your CV. Metrics included where available.",
+  },
+  {
+    icon: "⬡", color: "var(--violet)",
+    title: "Shareable profile",
+    desc: "One link. Shows your title, location, years of experience, and a technical summary.",
+  },
+]
+
+const STATS = [
+  { value: "~15s", label: "profile ready" },
+  { value: "100%", label: "GitHub verified" },
+  { value: "0",    label: "forms to fill" },
+]
 
 export default function LandingPage() {
   const [hovered, setHovered] = useState<"google" | "github" | null>(null)
@@ -21,111 +38,224 @@ export default function LandingPage() {
     <div style={{
       position: "absolute", inset: 0,
       display: "flex", flexDirection: "column",
-      background: "var(--bg)",
-      overflow: "hidden",
+      background: "var(--bg)", overflowY: "auto",
     }}>
       {/* Ambient glows */}
       <div className="glow" style={{
-        width: 600, height: 600, top: -200, left: -200,
-        background: "radial-gradient(circle, var(--mint), transparent 60%)",
-        opacity: 0.12,
+        width: 700, height: 700, top: -260, left: -200,
+        background: "radial-gradient(circle, var(--mint), transparent 60%)", opacity: 0.1,
       }} />
       <div className="glow" style={{
-        width: 700, height: 700, bottom: -300, right: -200,
-        background: "radial-gradient(circle, var(--violet), transparent 60%)",
-        opacity: 0.10,
+        width: 600, height: 600, top: 200, right: -200,
+        background: "radial-gradient(circle, var(--violet), transparent 60%)", opacity: 0.08,
       }} />
 
-      {/* Top bar */}
+      {/* Header */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "24px 40px", zIndex: 2,
+        padding: "20px 48px", zIndex: 2, flexShrink: 0,
       }}>
-        <Logo />
-        <nav style={{ display: "flex", gap: 28, fontSize: 14, color: "var(--fg-2)", cursor: "pointer" }}>
-          <span>Manifesto</span>
-          <span>Spaces</span>
-          <span>For Recruiters</span>
-          <span style={{ color: "var(--fg)" }}>Sign in</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M3 4 L12 20 L21 4" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="2" fill="var(--mint)" />
+          </svg>
+          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.02em" }}>VouchIT</span>
+        </div>
+        <nav style={{ display: "flex", gap: 28, fontSize: 13, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>
+          <span style={{ cursor: "pointer" }}>manifesto</span>
+          <span style={{ cursor: "pointer" }}>spaces</span>
+          <span style={{ cursor: "pointer" }}>for recruiters</span>
         </nav>
+        <button
+          className="btn"
+          onClick={() => signIn("github", { callbackUrl: "/upload" })}
+          style={{ padding: "8px 18px", fontSize: 13 }}>
+          Sign in →
+        </button>
       </header>
 
       {/* Hero */}
-      <main style={{
-        flex: 1, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        padding: "0 40px", textAlign: "center", zIndex: 2,
-      }}>
-        <h1 style={{
-          fontSize: "clamp(56px, 7vw, 96px)",
-          fontWeight: 600, lineHeight: 0.98, margin: 0,
-          letterSpacing: "-0.04em",
-          maxWidth: 980,
+      <main style={{ flex: 1, zIndex: 2 }}>
+        <section style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", textAlign: "center",
+          padding: "80px 48px 64px", maxWidth: 900, margin: "0 auto",
         }}>
-          Let your code speak.<br />
-          <span style={{
-            background: "linear-gradient(90deg, var(--mint), var(--violet))",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}>Not you.</span>
-        </h1>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 24,
+            padding: "5px 14px", borderRadius: 999,
+            background: "rgba(124,255,178,0.08)", border: "1px solid rgba(124,255,178,0.2)",
+            fontSize: 12, fontFamily: "var(--mono)", color: "var(--mint)",
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--mint)" }} />
+            Evidence-based · GitHub verified
+          </div>
 
-        <p style={{
-          marginTop: 24, fontSize: 18, color: "var(--fg-2)",
-          maxWidth: 580, lineHeight: 1.5,
-        }}>
-          Evidence-based developer profiles. Drop your CV, link your GitHub —
-          we&apos;ll handle the rest. Verified skills, real GitHub activity,
-          and a <span style={{ color: "var(--mint)" }}>shareable profile</span> that speaks for itself.
-        </p>
-
-        <div style={{ display: "flex", gap: 16, marginTop: 44, flexWrap: "wrap", justifyContent: "center" }}>
-          <button
-            className="btn"
-            onMouseEnter={() => setHovered("google")}
-            onMouseLeave={() => setHovered(null)}
-            onClick={() => signIn("google", { callbackUrl: "/upload" })}
-            style={{
-              padding: "20px 32px", fontSize: 16, minWidth: 240,
-              background: hovered === "google" ? "var(--bg-3)" : "var(--bg-2)",
-            }}>
-            <GoogleGlyph /> Continue with Google
-          </button>
-          <button
-            className="btn"
-            onMouseEnter={() => setHovered("github")}
-            onMouseLeave={() => setHovered(null)}
-            onClick={() => signIn("github", { callbackUrl: "/upload" })}
-            style={{
-              padding: "20px 32px", fontSize: 16, minWidth: 240,
-              background: hovered === "github"
-                ? "linear-gradient(180deg, #1C1C22, #0F0F12)"
-                : "linear-gradient(180deg, #16161B, #0F0F12)",
-              borderColor: "var(--line-2)",
-              boxShadow: hovered === "github"
-                ? "0 8px 32px -8px rgba(124,255,178,0.25), inset 0 1px 0 rgba(255,255,255,0.04)"
-                : "inset 0 1px 0 rgba(255,255,255,0.04)",
-            }}>
-            <GithubGlyph />
-            Continue with GitHub
+          <h1 style={{
+            fontSize: "clamp(52px, 7vw, 88px)",
+            fontWeight: 600, lineHeight: 0.96, margin: "0 0 28px",
+            letterSpacing: "-0.04em",
+          }}>
+            Let your code speak.<br />
             <span style={{
-              fontFamily: "var(--mono)", fontSize: 11,
-              padding: "2px 6px", borderRadius: 4,
-              background: "rgba(124,255,178,0.12)", color: "var(--mint)",
-              marginLeft: 6,
-            }}>verified</span>
-          </button>
-        </div>
+              background: "linear-gradient(90deg, var(--mint) 0%, var(--violet) 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>Not you.</span>
+          </h1>
 
-        <div style={{ marginTop: 24, fontSize: 13, color: "var(--fg-3)" }}>
-          Frictionless. Zero forms. Profile ready in ~12 seconds.
-        </div>
+          <p style={{ fontSize: 17, color: "var(--fg-2)", maxWidth: 520, lineHeight: 1.6, margin: "0 0 44px" }}>
+            Drop your CV, link your GitHub. We verify your skills against real commits
+            and build a profile that actually proves what you can do.
+          </p>
+
+          {/* CTA buttons */}
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+            <button
+              className="btn"
+              onMouseEnter={() => setHovered("github")}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => signIn("github", { callbackUrl: "/upload" })}
+              style={{
+                padding: "16px 32px", fontSize: 15, minWidth: 230,
+                background: hovered === "github"
+                  ? "linear-gradient(180deg, #1C1C22, #0F0F12)"
+                  : "linear-gradient(180deg, #16161B, #0F0F12)",
+                borderColor: hovered === "github" ? "rgba(124,255,178,0.4)" : "var(--line-2)",
+                boxShadow: hovered === "github" ? "0 8px 32px -8px rgba(124,255,178,0.2)" : "none",
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+              <GithubGlyph />
+              Continue with GitHub
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 10,
+                padding: "2px 6px", borderRadius: 4,
+                background: "rgba(124,255,178,0.12)", color: "var(--mint)",
+              }}>recommended</span>
+            </button>
+            <button
+              className="btn"
+              onMouseEnter={() => setHovered("google")}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => signIn("google", { callbackUrl: "/upload" })}
+              style={{
+                padding: "16px 32px", fontSize: 15, minWidth: 200,
+                background: hovered === "google" ? "var(--bg-3)" : "var(--bg-2)",
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+              <GoogleGlyph />
+              Continue with Google
+            </button>
+          </div>
+
+          <div style={{ marginTop: 18, fontSize: 12, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>
+            No forms. No manual input. Profile ready in ~15 seconds.
+          </div>
+        </section>
+
+        {/* Stats row */}
+        <section style={{
+          display: "flex", justifyContent: "center", gap: 0,
+          borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)",
+          background: "var(--bg-1)",
+        }}>
+          {STATS.map(({ value, label }, i) => (
+            <div key={label} style={{
+              flex: 1, maxWidth: 200, padding: "28px 0", textAlign: "center",
+              borderRight: i < STATS.length - 1 ? "1px solid var(--line)" : "none",
+            }}>
+              <div style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.03em", color: "var(--fg)" }}>{value}</div>
+              <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 4, fontFamily: "var(--mono)" }}>{label}</div>
+            </div>
+          ))}
+        </section>
+
+        {/* Features grid */}
+        <section style={{ padding: "72px 48px", maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 12px", letterSpacing: "-0.025em" }}>
+              Everything in one profile
+            </h2>
+            <p style={{ fontSize: 15, color: "var(--fg-3)", margin: 0 }}>
+              Built automatically. No editing required.
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+            {FEATURES.map(({ icon, color, title, desc }) => (
+              <div key={title} style={{
+                padding: "24px 26px", borderRadius: 16,
+                background: "var(--bg-1)", border: "1px solid var(--line)",
+              }}>
+                <div style={{ fontSize: 22, color, marginBottom: 14 }}>{icon}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{title}</div>
+                <div style={{ fontSize: 13, color: "var(--fg-3)", lineHeight: 1.6 }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section style={{
+          padding: "64px 48px", maxWidth: 960, margin: "0 auto",
+          borderTop: "1px solid var(--line)",
+        }}>
+          <h2 style={{ fontSize: 32, fontWeight: 600, margin: "0 0 48px", letterSpacing: "-0.025em", textAlign: "center" }}>
+            How it works
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+            {[
+              { step: "01", title: "Sign in",      desc: "GitHub or Google — takes 10 seconds." },
+              { step: "02", title: "Drop your CV", desc: "PDF or DOCX, any format."              },
+              { step: "03", title: "We analyze",   desc: "AI reads your CV, GitHub verifies it." },
+              { step: "04", title: "Share",         desc: "One link. Works everywhere."           },
+            ].map(({ step, title, desc }, i) => (
+              <div key={step} style={{ position: "relative", padding: "20px 20px 20px 0" }}>
+                {i < 3 && (
+                  <div style={{
+                    position: "absolute", top: 26, right: -4, left: "calc(100% - 8px)",
+                    height: 1, background: "var(--line)", zIndex: 0,
+                  }} />
+                )}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 32, height: 32, borderRadius: 999, marginBottom: 14,
+                  background: "var(--bg-2)", border: "1px solid var(--line)",
+                  fontFamily: "var(--mono)", fontSize: 11, color: "var(--mint)",
+                  position: "relative", zIndex: 1,
+                }}>{step}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{title}</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)", lineHeight: 1.5 }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Bottom CTA */}
+        <section style={{
+          padding: "72px 48px", textAlign: "center",
+          borderTop: "1px solid var(--line)",
+          background: "linear-gradient(180deg, transparent, rgba(124,255,178,0.03))",
+        }}>
+          <h2 style={{ fontSize: 36, fontWeight: 600, margin: "0 0 14px", letterSpacing: "-0.025em" }}>
+            Ready to prove your skills?
+          </h2>
+          <p style={{ fontSize: 15, color: "var(--fg-3)", margin: "0 0 36px" }}>
+            Free. No credit card. Profile live in seconds.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => signIn("github", { callbackUrl: "/upload" })}
+            style={{ padding: "16px 40px", fontSize: 15 }}>
+            Build your profile →
+          </button>
+        </section>
       </main>
 
       <footer style={{
-        padding: "20px 40px", fontSize: 12, color: "var(--fg-4)",
-        display: "flex", justifyContent: "space-between", zIndex: 2,
-        fontFamily: "var(--mono)",
+        padding: "20px 48px", fontSize: 12, color: "var(--fg-4)",
+        display: "flex", justifyContent: "space-between",
+        fontFamily: "var(--mono)", borderTop: "1px solid var(--line)",
+        flexShrink: 0, zIndex: 2,
       }}>
         <span>© 2026 VouchIT</span>
         <span>privacy · manifesto · github</span>
