@@ -4,41 +4,8 @@ import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { getProfile, type Profile } from "@/lib/api"
+import { MOCK_PROFILES } from "@/lib/mock-profiles"
 
-const DEMO: Profile = {
-  id: "demo",
-  name: "Ada Yılmaz",
-  developer_summary:
-    "Senior Backend Engineer with 5.8 years of experience. Proven track record designing and operating high-scale distributed systems. Has led cross-functional engineering efforts, mentored juniors, and helped establish code-quality standards across teams.",
-  hr_summary:
-    "Highly skilled Senior Backend Engineer with a strong track record of leading complex, high-impact projects. Brings 5+ years of hands-on experience in scalable system design, with leadership qualities and a collaborative approach.",
-  skills: [
-    { name: "Python",     level: "senior", verified: true,  evidenceCount: 18 },
-    { name: "Go",         level: "senior", verified: true,  evidenceCount: 9  },
-    { name: "PostgreSQL", level: "mid",    verified: false, evidenceCount: 12 },
-    { name: "Kubernetes", level: "mid",    verified: false, evidenceCount: 5  },
-    { name: "TypeScript", level: "junior", verified: true,  evidenceCount: 7  },
-  ],
-  metadata: {
-    title: "Senior Backend Engineer",
-    location: "Istanbul, Turkey",
-    yearsExperience: 5.8,
-    highlights: [
-      "Reduced p99 latency on payments service from 480ms to 95ms",
-      "Led rewrite of order orchestration service serving 2M daily orders",
-      "Built fraud detection pipeline processing 12M transactions/day",
-    ],
-    githubLanguages: [
-      { name: "Go",         pct: 38, color: "#00ADD8" },
-      { name: "Python",     pct: 31, color: "#3572A5" },
-      { name: "TypeScript", pct: 17, color: "#3178C6" },
-      { name: "Shell",      pct: 8,  color: "#89E051" },
-      { name: "Other",      pct: 6,  color: "#7A7A82" },
-    ],
-    githubRepos: 47,
-    githubStars: 312,
-  },
-}
 
 function Heatmap({ seed, data }: { seed: string; data?: number[] }) {
   const colors = ["var(--bg-3)", "rgba(124,255,178,0.2)", "rgba(124,255,178,0.45)", "rgba(124,255,178,0.7)", "rgba(124,255,178,0.95)"]
@@ -50,10 +17,10 @@ function Heatmap({ seed, data }: { seed: string; data?: number[] }) {
     const padded = Array(Math.max(0, 182 - data.length)).fill(0).concat(data)
     cells = padded.slice(-182).map((n) => Math.min(4, Math.ceil((n / max) * 4)))
   } else {
-    const hash = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0)
+    const hash = Math.abs(seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0))
     cells = Array.from({ length: 182 }, (_, i) => {
       const v = ((hash + i * 9301 + 49297) % 233280) / 233280
-      return Math.min(4, Math.floor(v * (1 + Math.sin((i + hash) / 8) * 0.5) * 5))
+      return Math.min(4, Math.max(0, Math.floor(v * (1 + Math.sin((i + hash) / 8) * 0.5) * 5)))
     })
   }
 
@@ -88,16 +55,39 @@ export default function ProfilePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { data: session } = useSession()
-  const [profile, setProfile] = useState<Profile | null>(id === "demo" ? DEMO : null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (id === "demo") return
-    getProfile(id).then((p) => {
-      setProfile(p)
-      localStorage.setItem("lastProfileId", id)
-    }).catch(() => setError("Profil yüklenemedi"))
+    const mock = MOCK_PROFILES[id]
+    if (mock) { setProfile(mock); return }
+    getProfile(id).then(setProfile).catch(() => setError("Profil yüklenemedi"))
   }, [id])
+
+  if (id === "demo") {
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--bg)", gap: 0 }}>
+        <div className="glow" style={{ width: 500, height: 500, top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "radial-gradient(circle, var(--mint), transparent 65%)", opacity: 0.06 }} />
+        <div style={{ textAlign: "center", maxWidth: 420, padding: "0 32px", position: "relative" }}>
+          <div style={{ fontSize: 36, color: "var(--mint)", marginBottom: 24 }}>◈</div>
+          <h2 style={{ margin: "0 0 12px", fontSize: 28, fontWeight: 600, letterSpacing: "-0.025em" }}>
+            No profile yet
+          </h2>
+          <p style={{ margin: "0 0 32px", fontSize: 15, color: "var(--fg-3)", lineHeight: 1.6 }}>
+            Drop your CV and link your GitHub.<br />
+            We&apos;ll build your verified profile in ~15 seconds.
+          </p>
+          <button className="btn btn-primary" onClick={() => router.push("/upload")} style={{ padding: "14px 32px", fontSize: 15 }}>
+            Build your profile →
+          </button>
+          <div style={{ marginTop: 16, fontSize: 12, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>
+            No forms. No manual input.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (error) {
     return (
@@ -148,13 +138,13 @@ export default function ProfilePage() {
           <nav style={{ display: "flex", gap: 22, fontSize: 13, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>
             <span style={{ color: "var(--fg)" }}>profile</span>
             <Link href="/spaces">spaces</Link>
-            <span style={{ cursor: "pointer" }}>vouches</span>
-            <span style={{ cursor: "pointer" }}>settings</span>
+            <Link href="/vouches">vouches</Link>
+            <Link href="/settings">settings</Link>
           </nav>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button className="btn" onClick={() => router.push("/spaces")} style={{ padding: "8px 14px", fontSize: 13 }}>
-            Spaces feed →
+            ← spaces
           </button>
           <div style={{
             width: 32, height: 32, borderRadius: 999, overflow: "hidden", flexShrink: 0,
@@ -300,8 +290,14 @@ export default function ProfilePage() {
                             }}>● evidence</span>
                           )}
                         </div>
-                        <span style={{ fontSize: 11, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>
-                          {skill.evidenceCount} {verified ? "repos" : "mentions"} · {skill.level}
+                        <span style={{ fontSize: 11, color: "var(--fg-3)", fontFamily: "var(--mono)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ letterSpacing: "0.05em" }}>
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <span key={i} style={{ color: i < Math.min(5, Math.ceil(skill.evidenceCount / 4)) ? "var(--mint)" : "var(--fg-4)" }}>◆</span>
+                            ))}
+                          </span>
+                          <span style={{ color: "var(--fg-4)" }}>·</span>
+                          {skill.level}
                         </span>
                       </div>
                       <div className="skill-bar"><div style={{ width: `${pct}%` }} /></div>

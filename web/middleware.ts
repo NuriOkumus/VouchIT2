@@ -8,5 +8,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ["/upload", "/p/:path*", "/spaces"],
+  matcher: ["/upload", "/p/:path*", "/spaces", "/vouches", "/settings"],
 }

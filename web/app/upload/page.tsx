@@ -19,7 +19,7 @@ export default function UploadPage() {
 
   function handleContinue() {
     if (!file || !session?.user?.email) return
-    setPendingUpload({ file, email: session.user.email, token: session.accessToken })
+    setPendingUpload({ file, userId: session.user.email, token: session.accessToken })
     router.push("/loading")
   }
 

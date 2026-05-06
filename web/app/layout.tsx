@@ -1,20 +1,29 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter_Tight, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import SessionProvider from "@/components/SessionProvider"
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] })
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] })
+const interTight = Inter_Tight({
+  variable: "--font-sans",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "VouchIT",
-  description: "GitHub konuşsun, sen yazma.",
+  description: "Let your code speak.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${interTight.variable} ${jetbrainsMono.variable}`} style={{ height: "100%" }}>
+      <body style={{ height: "100%", position: "relative" }}>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { useState, useEffect } from "react"
+import { signIn, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 const FEATURES = [
   {
@@ -32,7 +33,21 @@ const STATS = [
 ]
 
 export default function LandingPage() {
-  const [hovered, setHovered] = useState<"google" | "github" | null>(null)
+  const [hovered, setHovered] = useState<"github" | null>(null)
+  const { status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (status === "authenticated") router.replace("/spaces")
+  }, [status, router])
+
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+        <div style={{ width: 32, height: 32, borderRadius: 999, border: "2px solid var(--mint)", borderTopColor: "transparent", animation: "verifiedSpin .8s linear infinite" }} />
+      </div>
+    )
+  }
 
   return (
     <div style={{
@@ -69,7 +84,7 @@ export default function LandingPage() {
         </nav>
         <button
           className="btn"
-          onClick={() => signIn("github", { callbackUrl: "/upload" })}
+          onClick={() => signIn("github", { callbackUrl: "/spaces" })}
           style={{ padding: "8px 18px", fontSize: 13 }}>
           Sign in →
         </button>
@@ -115,7 +130,7 @@ export default function LandingPage() {
               className="btn"
               onMouseEnter={() => setHovered("github")}
               onMouseLeave={() => setHovered(null)}
-              onClick={() => signIn("github", { callbackUrl: "/upload" })}
+              onClick={() => signIn("github", { callbackUrl: "/spaces" })}
               style={{
                 padding: "16px 32px", fontSize: 15, minWidth: 230,
                 background: hovered === "github"
@@ -133,19 +148,20 @@ export default function LandingPage() {
                 background: "rgba(124,255,178,0.12)", color: "var(--mint)",
               }}>recommended</span>
             </button>
-            <button
-              className="btn"
-              onMouseEnter={() => setHovered("google")}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => signIn("google", { callbackUrl: "/upload" })}
-              style={{
-                padding: "16px 32px", fontSize: 15, minWidth: 200,
-                background: hovered === "google" ? "var(--bg-3)" : "var(--bg-2)",
-                display: "flex", alignItems: "center", gap: 10,
-              }}>
+            <div style={{
+              padding: "16px 32px", fontSize: 15, minWidth: 200,
+              background: "var(--bg-1)", border: "1px solid var(--line)",
+              borderRadius: 12, display: "flex", alignItems: "center", gap: 10,
+              opacity: 0.5, cursor: "not-allowed",
+            }}>
               <GoogleGlyph />
-              Continue with Google
-            </button>
+              <span style={{ color: "var(--fg-3)" }}>Continue with Google</span>
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: 10,
+                padding: "2px 6px", borderRadius: 4,
+                background: "rgba(167,139,250,0.1)", color: "var(--violet)",
+              }}>soon</span>
+            </div>
           </div>
 
           <div style={{ marginTop: 18, fontSize: 12, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>
@@ -204,10 +220,10 @@ export default function LandingPage() {
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
             {[
-              { step: "01", title: "Sign in",      desc: "GitHub or Google — takes 10 seconds." },
-              { step: "02", title: "Drop your CV", desc: "PDF or DOCX, any format."              },
-              { step: "03", title: "We analyze",   desc: "AI reads your CV, GitHub verifies it." },
-              { step: "04", title: "Share",         desc: "One link. Works everywhere."           },
+              { step: "01", title: "Sign in",      desc: "GitHub or Google — takes 10 seconds."       },
+              { step: "02", title: "Drop your CV", desc: "PDF or DOCX, any format."                  },
+              { step: "03", title: "We analyze",   desc: "AI reads your CV, GitHub verifies it."     },
+              { step: "04", title: "Join the feed", desc: "Discover builders. Get discovered."        },
             ].map(({ step, title, desc }, i) => (
               <div key={step} style={{ position: "relative", padding: "20px 20px 20px 0" }}>
                 {i < 3 && (
@@ -244,7 +260,7 @@ export default function LandingPage() {
           </p>
           <button
             className="btn btn-primary"
-            onClick={() => signIn("github", { callbackUrl: "/upload" })}
+            onClick={() => signIn("github", { callbackUrl: "/spaces" })}
             style={{ padding: "16px 40px", fontSize: 15 }}>
             Build your profile →
           </button>

@@ -184,6 +184,17 @@ analyzeRouter.post("/analyze-cv", async (c) => {
       skills: Array<{ name: string; level: "junior" | "mid" | "senior"; verified: boolean; evidenceCount: number }>
     }
 
+    const yearsExp = data.years_experience ?? 0
+    for (const skill of data.skills) {
+      if (skill.evidenceCount >= 10 || (skill.evidenceCount >= 5 && yearsExp >= 5)) {
+        skill.level = "senior"
+      } else if (skill.evidenceCount >= 3 || yearsExp >= 2) {
+        skill.level = "mid"
+      } else {
+        skill.level = "junior"
+      }
+    }
+
     const metadata = {
       title: data.title,
       location: data.location,

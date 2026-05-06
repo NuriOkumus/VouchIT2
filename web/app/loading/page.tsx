@@ -44,21 +44,21 @@ export default function LoadingPage() {
   function tryNavigate() {
     if (!apiReadyRef.current || !animDoneRef.current) return
     if (!profileIdRef.current) return // error state — stay on page
-    setTimeout(() => router.push(`/p/${profileIdRef.current!}`), 500)
+    setTimeout(() => router.push("/spaces"), 500)
   }
 
   useEffect(() => {
     const pending = getPendingUpload()
     if (!pending) {
-      // No pending upload — redirect to own profile if exists, else demo
-      const lastId = localStorage.getItem("lastProfileId")
-      apiReadyRef.current = true
-      profileIdRef.current = lastId ?? "demo"
+      router.replace("/spaces")
       return
     }
 
-    uploadCV(pending.file, pending.email, pending.token)
-      .then((profile) => { profileIdRef.current = profile.id })
+    uploadCV(pending.file, pending.userId, pending.token)
+      .then((profile) => {
+        profileIdRef.current = profile.id
+        localStorage.setItem("lastProfileId", profile.id)
+      })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err)
         setError(msg.includes("503") || msg.includes("overloaded")

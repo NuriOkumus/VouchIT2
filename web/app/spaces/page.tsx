@@ -14,93 +14,103 @@ const SPACES = [
 ]
 
 type FeedItem =
-  | { type: "push";    who: Actor; repo: string; branch: string; commits: number; message: string; time: string; years: number }
-  | { type: "pr";      who: Actor; repo: string; title: string; status: "open" | "merged"; time: string; years: number }
-  | { type: "release"; who: Actor; repo: string; version: string; desc: string; stars: number; time: string; years: number }
-  | { type: "verify";  who: Actor; skills: string[]; langs: Lang[]; years: number; time: string }
-  | { type: "join";    who: Actor; bio: string; skills: string[]; years: number; time: string }
-  | { type: "role";    company: string; role: string; skills: string[]; match: number; time: string }
+  | { type: "profile"; spaces: string[]; who: Actor; event: "verified" | "joined" | "open"; bio?: string; highlight?: string; skills: string[]; langs?: Lang[]; years: number; time: string }
+  | { type: "role";    spaces: string[]; company: string; role: string; skills: string[]; match: number; time: string }
 
-type Actor = { initials: string; name: string; title: string; verified: boolean }
+type Actor = { initials: string; name: string; title: string; verified: boolean; profileId: string }
 type Lang  = { name: string; pct: number; color: string }
 type Filters = { verified: boolean; senior: boolean; available: boolean }
 type Sort = "activity" | "verified" | "senior"
 
+const ONUR: Actor  = { initials: "OS", name: "Onur Şahin",  title: "Principal Engineer · Berlin",          verified: true,  profileId: "onur-sahin"  }
+const ELIF: Actor  = { initials: "EY", name: "Elif Yıldız", title: "Senior Backend Engineer · Izmir",         verified: true,  profileId: "elif-yildiz" }
+const MERT: Actor  = { initials: "MK", name: "Mert Kaya",   title: "Staff Engineer · Ankara",                 verified: true,  profileId: "mert-kaya"   }
+const BERK: Actor  = { initials: "BT", name: "Berk Toprak", title: "Backend Engineer · Remote",               verified: true,  profileId: "berk-toprak" }
+const ZEYNEP: Actor = { initials: "ZK", name: "Zeynep Koç", title: "Senior SRE · Istanbul",                   verified: true,  profileId: "zeynep-koc"  }
+const CAN: Actor   = { initials: "CU", name: "Can Uçar",    title: "Backend Engineer · Istanbul",             verified: true,  profileId: "can-ucar"    }
+const DENIZ: Actor = { initials: "DA", name: "Deniz Aksoy", title: "Tech Lead · Istanbul",                    verified: false, profileId: "deniz-aksoy" }
+
+const B = "backend-tr", G = "go-guild", M = "ml-istanbul", D = "devops-tr", R = "open-roles"
+
 const FEED: FeedItem[] = [
   {
-    type: "verify",
-    who: { initials: "OS", name: "Onur Şahin", title: "Principal Engineer · Berlin", verified: true },
-    skills: ["Go", "Kafka", "Postgres", "Protobuf", "ClickHouse"],
+    type: "profile", spaces: [B, G], event: "verified",
+    who: ONUR, years: 12, time: "2m ago",
+    highlight: "Built go-schema-registry — 1.2k stars, used by 200+ companies in production.",
+    skills: ["Go", "Kafka", "PostgreSQL", "Protobuf", "ClickHouse"],
     langs: [{ name: "Go", pct: 79, color: "#00ADD8" }, { name: "Python", pct: 13, color: "#3572A5" }, { name: "TypeScript", pct: 8, color: "#3178C6" }],
-    years: 12, time: "2m ago",
   },
   {
-    type: "release",
-    who: { initials: "OS", name: "Onur Şahin", title: "Principal Engineer · Berlin", verified: true },
-    repo: "onursh/go-schema-registry", version: "v2.1.0",
-    desc: "Add Avro union type support, fix confluent compat headers, 40% faster serialization.",
-    stars: 1284, time: "18m ago", years: 12,
+    type: "profile", spaces: [B, M], event: "verified",
+    who: ELIF, years: 6, time: "1h ago",
+    highlight: "Cut cold-start latency on ML models by 65% with async cache warm-up.",
+    skills: ["Python", "Django", "AWS", "Redis", "Celery"],
+    langs: [{ name: "Python", pct: 71, color: "#3572A5" }, { name: "TypeScript", pct: 18, color: "#3178C6" }, { name: "Shell", pct: 11, color: "#89E051" }],
   },
   {
-    type: "pr",
-    who: { initials: "EY", name: "Elif Yıldız", title: "Senior Backend Engineer · Izmir", verified: true },
-    repo: "insider/ml-serving", title: "feat: async cache warm-up on model load", status: "open", time: "1h ago", years: 6,
+    type: "profile", spaces: [B, G], event: "open",
+    who: MERT, years: 9, time: "2h ago",
+    highlight: "Dropped order router p99 from 340ms to 28ms. Open to Staff/Principal roles.",
+    skills: ["Go", "Kafka", "PostgreSQL", "Kubernetes", "OpenTelemetry"],
+    langs: [{ name: "Go", pct: 84, color: "#00ADD8" }, { name: "Shell", pct: 10, color: "#89E051" }, { name: "Python", pct: 6, color: "#3572A5" }],
   },
   {
-    type: "push",
-    who: { initials: "MK", name: "Mert Kaya", title: "Staff Engineer · Ankara", verified: true },
-    repo: "trendyol/order-router", branch: "hotfix/duplicate-events",
-    commits: 3, message: "fix: deduplicate order events on Kafka consumer restart", time: "2h ago", years: 9,
-  },
-  {
-    type: "join",
-    who: { initials: "BT", name: "Berk Toprak", title: "Backend Engineer · Remote", verified: true },
-    bio: "OSS contributor building high-perf networking tools in Rust. 2× Rustacean of the month.",
-    skills: ["Rust", "Go", "Redis", "WASM", "Tokio"], years: 4, time: "3h ago",
-  },
-  {
-    type: "role",
+    type: "role", spaces: [B, G, R],
     company: "Trendyol", role: "Senior Backend Engineer — Payments",
     skills: ["Go", "Kafka", "Postgres", "gRPC"], match: 94, time: "4h ago",
   },
   {
-    type: "pr",
-    who: { initials: "ZK", name: "Zeynep Koç", title: "Senior SRE · Istanbul", verified: true },
-    repo: "getir/platform", title: "chore: bump ArgoCD to 2.11, migrate app-of-apps", status: "merged", time: "5h ago", years: 7,
+    type: "profile", spaces: [B, G], event: "joined",
+    who: BERK, years: 4, time: "3h ago",
+    bio: "OSS contributor building high-perf networking tools in Rust. 2× Rustacean of the month.",
+    skills: ["Rust", "Go", "WASM", "Tokio", "Redis"],
+    langs: [{ name: "Rust", pct: 68, color: "#DEA584" }, { name: "Go", pct: 22, color: "#00ADD8" }, { name: "C", pct: 10, color: "#555555" }],
   },
   {
-    type: "push",
-    who: { initials: "CU", name: "Can Uçar", title: "Backend Engineer · Istanbul", verified: true },
-    repo: "peak/leaderboard-v2", branch: "feat/realtime-score-sync",
-    commits: 7, message: "perf: replace polling with WebSocket pub-sub, cut latency 200ms→12ms", time: "6h ago", years: 3,
+    type: "profile", spaces: [D], event: "verified",
+    who: ZEYNEP, years: 7, time: "5h ago",
+    highlight: "Reduced MTTD from 11 minutes to under 90s via custom alerting pipeline.",
+    skills: ["Kubernetes", "ArgoCD", "Terraform", "Prometheus", "Go"],
+    langs: [{ name: "Go", pct: 44, color: "#00ADD8" }, { name: "Python", pct: 31, color: "#3572A5" }, { name: "Shell", pct: 25, color: "#89E051" }],
   },
   {
-    type: "verify",
-    who: { initials: "EY", name: "Elif Yıldız", title: "Senior Backend Engineer · Izmir", verified: true },
-    skills: ["Python", "Django", "AWS", "Redis", "Celery"],
-    langs: [{ name: "Python", pct: 71, color: "#3572A5" }, { name: "TypeScript", pct: 18, color: "#3178C6" }, { name: "Shell", pct: 11, color: "#89E051" }],
-    years: 6, time: "8h ago",
+    type: "profile", spaces: [B], event: "joined",
+    who: CAN, years: 3, time: "6h ago",
+    bio: "Building real-time leaderboard infra at Peak Games. Cut update latency from 200ms to 12ms.",
+    skills: ["Go", "WebSocket", "Redis", "PostgreSQL", "TypeScript"],
+    langs: [{ name: "Go", pct: 61, color: "#00ADD8" }, { name: "TypeScript", pct: 28, color: "#3178C6" }, { name: "Python", pct: 11, color: "#3572A5" }],
   },
   {
-    type: "role",
+    type: "role", spaces: [B, D, R],
     company: "Getir", role: "Staff Engineer — Platform",
     skills: ["Go", "K8s", "Terraform", "Kafka"], match: 82, time: "10h ago",
   },
   {
-    type: "join",
-    who: { initials: "DA", name: "Deniz Aksoy", title: "Tech Lead · Istanbul", verified: false },
-    bio: "Tech lead @ Yapı Kredi. Leading migration of core banking services to microservices.",
-    skills: ["Java", "Spring Boot", "K8s", "Kafka"], years: 8, time: "12h ago",
+    type: "profile", spaces: [B, D], event: "joined",
+    who: DENIZ, years: 8, time: "12h ago",
+    bio: "Tech lead @ Yapı Kredi, leading migration of core banking to microservices.",
+    skills: ["Java", "Spring Boot", "Kafka", "Kubernetes", "PostgreSQL"],
+    langs: [{ name: "Java", pct: 72, color: "#B07219" }, { name: "Kotlin", pct: 18, color: "#A97BFF" }, { name: "Shell", pct: 10, color: "#89E051" }],
   },
 ]
 
-function passesFilters(item: FeedItem, f: Filters): boolean {
+function matchesSearch(item: FeedItem, q: string): boolean {
+  if (!q) return true
+  const s = q.toLowerCase()
+  if (item.type === "role") return item.role.toLowerCase().includes(s) || item.company.toLowerCase().includes(s) || item.skills.some(sk => sk.toLowerCase().includes(s))
+  if (item.who.name.toLowerCase().includes(s) || item.who.title.toLowerCase().includes(s)) return true
+  if (item.skills.some(sk => sk.toLowerCase().includes(s))) return true
+  if (item.bio?.toLowerCase().includes(s) || item.highlight?.toLowerCase().includes(s)) return true
+  return false
+}
+
+function passesFilters(item: FeedItem, f: Filters, space: string, query: string): boolean {
+  if (!item.spaces.includes(space)) return false
+  if (!matchesSearch(item, query)) return false
   if (item.type === "role") return true
-  const verified = item.who.verified
-  const years = item.years
-  if (f.verified && !verified) return false
-  if (f.senior && years < 6) return false
-  if (f.available && item.type !== "join") return false
+  if (f.verified && !item.who.verified) return false
+  if (f.senior && item.years < 6) return false
+  if (f.available && item.event !== "open") return false
   return true
 }
 
@@ -201,6 +211,12 @@ function CardActions({ saved, vouched, onSave, onVouch, onView }: {
   )
 }
 
+const EVENT_LABEL: Record<string, { text: string; color: string }> = {
+  verified: { text: "◈ verified profile", color: "var(--mint)"   },
+  joined:   { text: "joined the space",   color: "var(--fg-4)"   },
+  open:     { text: "▸ open to work",     color: "var(--amber)"  },
+}
+
 function FeedCard({ item, idx, saved, vouched, onSave, onVouch, onNavigate }: {
   item: FeedItem; idx: number
   saved: boolean; vouched: boolean
@@ -209,135 +225,39 @@ function FeedCard({ item, idx, saved, vouched, onSave, onVouch, onNavigate }: {
   const actions = <CardActions saved={saved} vouched={vouched} onSave={() => onSave(idx)} onVouch={() => onVouch(idx)} onView={onNavigate} />
   const base: React.CSSProperties = { padding: 18, borderRadius: 14, background: "var(--bg-1)", border: "1px solid var(--line)" }
 
-  if (item.type === "verify") return (
-    <div style={base}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar actor={item.who} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{item.who.name}</span>
-            <VerifiedBadge />
-            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>got verified</span>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
+  if (item.type === "profile") {
+    const ev = EVENT_LABEL[item.event]
+    return (
+      <div style={base}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <Avatar actor={item.who} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>{item.who.name}</span>
+              {item.who.verified && <VerifiedBadge />}
+              <span style={{ fontSize: 11, color: ev.color, fontFamily: "var(--mono)" }}>{ev.text}</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 3 }}>
+              {item.who.title} · <span style={{ fontFamily: "var(--mono)" }}>{item.years}y</span>
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title} · {item.years}y exp</div>
         </div>
-      </div>
-      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-        <SkillChips skills={item.skills} />
-        {item.langs.length > 0 && <LangBar langs={item.langs} />}
-      </div>
-      {actions}
-    </div>
-  )
 
-  if (item.type === "release") return (
-    <div style={base}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar actor={item.who} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{item.who.name}</span>
-            {item.who.verified && <VerifiedBadge />}
-            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>released</span>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
-          </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title}</div>
-        </div>
-      </div>
-      <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--line)" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--mono)", color: "var(--fg)" }}>{item.repo}</span>
-          <span style={{
-            fontSize: 11, fontFamily: "var(--mono)", padding: "2px 8px", borderRadius: 6,
-            background: "rgba(124,255,178,0.08)", border: "1px solid rgba(124,255,178,0.2)", color: "var(--mint)",
-          }}>{item.version}</span>
-        </div>
-        <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--fg-2)", lineHeight: 1.55 }}>{item.desc}</p>
-        <div style={{ marginTop: 8, fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>★ {item.stars.toLocaleString()}</div>
-      </div>
-      {actions}
-    </div>
-  )
+        {(item.highlight || item.bio) && (
+          <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.6 }}>
+            {item.highlight ?? item.bio}
+          </p>
+        )}
 
-  if (item.type === "pr") return (
-    <div style={base}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar actor={item.who} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{item.who.name}</span>
-            {item.who.verified && <VerifiedBadge />}
-            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>{item.status === "merged" ? "merged a PR" : "opened a PR"}</span>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
-          </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title}</div>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+          <SkillChips skills={item.skills} />
+          {item.langs && item.langs.length > 0 && <LangBar langs={item.langs} />}
         </div>
+        {actions}
       </div>
-      <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "center" }}>
-        <span style={{
-          fontSize: 10, padding: "2px 8px", borderRadius: 6, fontFamily: "var(--mono)", flexShrink: 0,
-          background: item.status === "merged" ? "rgba(167,139,250,0.1)" : "rgba(124,255,178,0.08)",
-          border: `1px solid ${item.status === "merged" ? "rgba(167,139,250,0.25)" : "rgba(124,255,178,0.2)"}`,
-          color: item.status === "merged" ? "var(--violet)" : "var(--mint)",
-        }}>{item.status}</span>
-        <span style={{ fontSize: 12, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>{item.repo}</span>
-      </div>
-      <div style={{
-        marginTop: 8, padding: "10px 12px", borderRadius: 8,
-        background: "var(--bg-2)", border: "1px solid var(--line)",
-        fontSize: 13, color: "var(--fg)", fontFamily: "var(--mono)",
-      }}>{item.title}</div>
-      {actions}
-    </div>
-  )
-
-  if (item.type === "push") return (
-    <div style={base}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar actor={item.who} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{item.who.name}</span>
-            {item.who.verified && <VerifiedBadge />}
-            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>pushed {item.commits} commit{item.commits > 1 ? "s" : ""}</span>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
-          </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title}</div>
-        </div>
-      </div>
-      <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", marginBottom: 6 }}>{item.repo} · {item.branch}</div>
-        <div style={{
-          padding: "10px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--line)",
-          fontSize: 12, color: "var(--fg-2)", fontFamily: "var(--mono)", lineHeight: 1.5,
-        }}>
-          <span style={{ color: "var(--fg-4)", marginRight: 8 }}>▸</span>{item.message}
-        </div>
-      </div>
-      {actions}
-    </div>
-  )
-
-  if (item.type === "join") return (
-    <div style={base}>
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <Avatar actor={item.who} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{item.who.name}</span>
-            {item.who.verified && <VerifiedBadge />}
-            <span style={{ fontSize: 12, color: "var(--fg-3)" }}>joined the space</span>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>{item.time}</span>
-          </div>
-          <div style={{ fontSize: 12, color: "var(--fg-3)", marginTop: 2 }}>{item.who.title} · {item.years}y exp</div>
-          <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>{item.bio}</p>
-        </div>
-      </div>
-      <div style={{ marginTop: 12 }}><SkillChips skills={item.skills} /></div>
-      {actions}
-    </div>
-  )
+    )
+  }
 
   if (item.type === "role") return (
     <div style={{
@@ -383,9 +303,12 @@ export default function SpacesPage() {
   const [vouched, setVouched] = useState<Set<number>>(new Set())
   const { data: session } = useSession()
   const [profileHref, setProfileHref] = useState("/p/demo")
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const id = localStorage.getItem("lastProfileId")
+    setHasProfile(!!id)
     if (id) setProfileHref(`/p/${id}`)
   }, [])
 
@@ -407,17 +330,32 @@ export default function SpacesPage() {
   }
 
   const visibleFeed = useMemo(() => {
-    const filtered = FEED.map((item, i) => ({ item, i })).filter(({ item }) => passesFilters(item, filters))
+    const filtered = FEED.map((item, i) => ({ item, i })).filter(({ item }) => passesFilters(item, filters, activeSpace, searchQuery))
     const sorted = applySort(filtered.map((x) => x.item), sort)
     return sorted.map((item) => ({ item, i: FEED.indexOf(item) }))
-  }, [filters, sort])
+  }, [filters, sort, activeSpace, searchQuery])
 
   const space = SPACES.find((s) => s.id === activeSpace)!
+
+  const trendingSkills = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const item of FEED) {
+      if (!item.spaces.includes(activeSpace)) continue
+      const skills = item.type === "profile" || item.type === "role" ? item.skills : []
+      for (const s of skills) counts[s] = (counts[s] ?? 0) + 1
+    }
+    const sorted = Object.entries(counts).sort(([, a], [, b]) => b - a).slice(0, 5)
+    const max = sorted[0]?.[1] ?? 1
+    return sorted.map(([label, count]) => {
+      const h = label.split("").reduce((a, c) => a + c.charCodeAt(0), 0)
+      return { label, delta: `+${8 + (h % 39)}%`, pct: Math.round((count / max) * 100) }
+    })
+  }, [activeSpace])
 
   const FILTER_DEFS: { key: keyof Filters; label: string; activeLabel: string }[] = [
     { key: "verified", label: "Verified only", activeLabel: "✓ Verified only" },
     { key: "senior",   label: "Senior+",       activeLabel: "✓ Senior+"       },
-    { key: "available",label: "Available",     activeLabel: "✓ Available"     },
+    { key: "available", label: "Open to work", activeLabel: "✓ Open to work" },
   ]
 
   return (
@@ -437,19 +375,30 @@ export default function SpacesPage() {
           <nav style={{ display: "flex", gap: 22, fontSize: 13, color: "var(--fg-3)", fontFamily: "var(--mono)" }}>
             <Link href={profileHref}>profile</Link>
             <span style={{ color: "var(--fg)" }}>spaces</span>
-            <span style={{ cursor: "pointer" }}>vouches</span>
-            <span style={{ cursor: "pointer" }}>settings</span>
+            <Link href="/vouches">vouches</Link>
+            <Link href="/settings">settings</Link>
           </nav>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8, width: 260, padding: "8px 12px", borderRadius: 10,
-            background: "var(--bg-2)", border: "1px solid var(--line)", fontSize: 13, color: "var(--fg-3)",
+            background: "var(--bg-2)", border: "1px solid var(--line)", fontSize: 13,
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-4)" strokeWidth="2" style={{ flexShrink: 0 }}>
               <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
             </svg>
-            <span>Search people or skills…</span>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search people or skills…"
+              style={{
+                background: "none", border: "none", outline: "none", width: "100%",
+                fontSize: 13, color: "var(--fg)", fontFamily: "var(--sans)",
+              }}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} style={{ color: "var(--fg-4)", fontSize: 14, flexShrink: 0, lineHeight: 1 }}>✕</button>
+            )}
           </div>
           <Link href={profileHref} style={{
             display: "block", width: 32, height: 32, borderRadius: 999,
@@ -505,6 +454,25 @@ export default function SpacesPage() {
             </div>
           </div>
 
+          {/* No-profile CTA */}
+          {hasProfile === false && (
+            <div style={{
+              marginBottom: 20, padding: "14px 18px", borderRadius: 12,
+              background: "linear-gradient(135deg,rgba(124,255,178,0.06),rgba(167,139,250,0.04))",
+              border: "1px solid rgba(124,255,178,0.2)",
+              display: "flex", alignItems: "center", gap: 16,
+            }}>
+              <span style={{ fontSize: 20 }}>◈</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>Your verified profile is not set up yet</div>
+                <div style={{ fontSize: 12, color: "var(--fg-3)" }}>Drop your CV — let your code speak for you.</div>
+              </div>
+              <button className="btn btn-primary" onClick={() => router.push("/upload")} style={{ padding: "8px 16px", fontSize: 12, whiteSpace: "nowrap" }}>
+                Build your profile →
+              </button>
+            </div>
+          )}
+
           {/* Filter bar */}
           <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
             {FILTER_DEFS.map(({ key, label, activeLabel }) => (
@@ -534,7 +502,9 @@ export default function SpacesPage() {
                   key={i} item={item} idx={i}
                   saved={saved.has(i)} vouched={vouched.has(i)}
                   onSave={toggleSaved} onVouch={toggleVouched}
-                  onNavigate={() => router.push("/p/demo")}
+                  onNavigate={() => {
+                    if (item.type !== "role") router.push(`/p/${item.who.profileId}`)
+                  }}
                 />
               ))}
             </div>
@@ -550,19 +520,25 @@ export default function SpacesPage() {
           <div>
             <div style={{ fontSize: 11, color: "var(--fg-4)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Trending skills</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { label: "Go",         delta: "+18%", pct: 92 },
-                { label: "Rust",       delta: "+34%", pct: 68 },
-                { label: "Kubernetes", delta: "+12%", pct: 84 },
-                { label: "ML Ops",     delta: "+47%", pct: 56 },
-                { label: "PostgreSQL", delta: "+8%",  pct: 88 },
-              ].map(({ label, delta, pct }) => (
-                <div key={label}>
+              {trendingSkills.length === 0 ? (
+                <div style={{ fontSize: 12, color: "var(--fg-4)", fontFamily: "var(--mono)" }}>No data for this space.</div>
+              ) : trendingSkills.map(({ label, delta, pct }) => (
+                <div key={label} onClick={() => setSearchQuery(searchQuery === label ? "" : label)}
+                  style={{ cursor: "pointer" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 5 }}>
-                    <span style={{ fontSize: 13 }}>{label}</span>
+                    <span style={{
+                      fontSize: 13,
+                      color: searchQuery === label ? "var(--mint)" : "var(--fg)",
+                      transition: "color .15s",
+                    }}>{label}</span>
                     <span style={{ fontSize: 11, color: "var(--mint)", fontFamily: "var(--mono)" }}>{delta}</span>
                   </div>
-                  <div className="skill-bar" style={{ height: 3 }}><div style={{ width: `${pct}%` }} /></div>
+                  <div className="skill-bar" style={{ height: 3 }}>
+                    <div style={{
+                      width: `${pct}%`,
+                      background: searchQuery === label ? "var(--mint)" : undefined,
+                    }} />
+                  </div>
                 </div>
               ))}
             </div>
