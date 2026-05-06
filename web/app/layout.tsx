@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter_Tight, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import SessionProvider from "@/components/SessionProvider"
+import { auth } from "@/auth"
 
 const interTight = Inter_Tight({
   variable: "--font-sans",
@@ -20,11 +21,12 @@ export const metadata: Metadata = {
   description: "Let your code speak.",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
   return (
     <html lang="en" className={`${interTight.variable} ${jetbrainsMono.variable}`} style={{ height: "100%" }}>
       <body style={{ height: "100%", position: "relative" }}>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider session={session}>{children}</SessionProvider>
       </body>
     </html>
   )

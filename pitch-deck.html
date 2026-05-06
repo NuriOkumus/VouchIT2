@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VouchIT — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #07080F;
+  --bg-1:   #0D0F1A;
+  --bg-2:   #131625;
+  --bg-3:   #1A1D2E;
+  --line:   rgba(255,255,255,0.06);
+  --line-2: rgba(255,255,255,0.10);
+  --fg:     #EEEEF2;
+  --fg-2:   #A8A8B4;
+  --fg-3:   #6A6A78;
+  --teal:   #00E5B3;
+  --violet: #A78BFA;
+  --green:  #4ADE80;
+  --rose:   #FF6B7A;
+  --amber:  #FFB547;
+  --mono: "JetBrains Mono", monospace;
+  --sans: "Inter Tight", "Inter", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Orb BG ── */
+#bg-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  opacity: 0;
+  animation: orbFadeIn 1.5s ease forwards;
+}
+
+.orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,229,179,0.18) 0%, transparent 70%);
+  top: -150px; left: -100px;
+  animation: orbFadeIn 2s ease forwards, orb1drift 22s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(167,139,250,0.15) 0%, transparent 70%);
+  bottom: -100px; right: -80px;
+  animation: orbFadeIn 2.5s ease forwards, orb2drift 28s ease-in-out infinite alternate;
+}
+
+.orb-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(0,229,179,0.10) 0%, transparent 70%);
+  top: 40%; left: 55%;
+  animation: orbFadeIn 3s ease forwards, orb3drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes orbFadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes orb1drift {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(80px, 60px) scale(1.08); }
+  66%  { transform: translate(30px, 110px) scale(0.95); }
+  100% { transform: translate(100px, 50px) scale(1.05); }
+}
+
+@keyframes orb2drift {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(-90px, -50px) scale(1.1); }
+  66%  { transform: translate(-40px, -100px) scale(0.92); }
+  100% { transform: translate(-80px, -60px) scale(1.06); }
+}
+
+@keyframes orb3drift {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  50%  { transform: translate(-60px, 70px) scale(1.15); }
+  100% { transform: translate(50px, -40px) scale(0.9); }
+}
+
+/* ── Deck shell ── */
+#deck {
+  width: 100vw; height: 100vh;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* ── Slide base ── */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: clamp(32px, 4vw, 72px) clamp(40px, 6vw, 120px);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity, transform;
+  transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.22,1,0.36,1);
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1) translateY(0) !important;
+}
+
+.slide.leaving {
+  opacity: 0 !important;
+  transform: scale(0.95) translateY(-16px) !important;
+  filter: blur(4px);
+  transition: opacity 0.12s ease, transform 0.15s ease, filter 0.12s ease !important;
+}
+
+.slide.entering {
+  opacity: 0;
+  transform: scale(1.04) translateY(20px);
+  filter: blur(3px);
+}
+
+.slide.active.entered {
+  opacity: 1;
+  transform: scale(1) translateY(0) !important;
+  filter: blur(0px);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1), filter 0.2s ease !important;
+}
+
+/* ── Ambient noise overlay ── */
+.slide::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,229,179,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 85% 80%, rgba(167,139,250,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambientPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPulse {
+  0%   { opacity: 0.6; }
+  100% { opacity: 1.2; }
+}
+
+.slide > * { position: relative; z-index: 1; }
+
+/* ── Slide counter ── */
+#slide-counter {
+  position: fixed;
+  top: 24px; right: 32px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  letter-spacing: 0.1em;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+
+/* ── Dot navigation ── */
+#dots {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 8px;
+  z-index: 100;
+}
+
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.dot.active {
+  width: 20px;
+  border-radius: 3px;
+  background: var(--teal);
+  box-shadow: 0 0 8px rgba(0,229,179,0.6);
+}
+
+/* ── Navigation buttons ── */
+#nav-btns {
+  position: fixed;
+  bottom: 24px; right: 32px;
+  display: flex; gap: 8px;
+  z-index: 100;
+}
+
+.nav-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line-2);
+  color: var(--fg-2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+
+.nav-btn:hover {
+  background: rgba(0,229,179,0.1);
+  border-color: var(--teal);
+  color: var(--teal);
+  box-shadow: 0 0 12px rgba(0,229,179,0.2);
+}
+
+/* ── Fullscreen hint ── */
+#fs-hint {
+  position: fixed;
+  bottom: 28px; left: 32px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  z-index: 100;
+  letter-spacing: 0.05em;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 1 — COVER
+══════════════════════════════════════ */
+#s1 {
+  gap: 0;
+  text-align: center;
+}
+
+#s1 .beta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(0,229,179,0.08);
+  border: 1px solid rgba(0,229,179,0.25);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+  letter-spacing: 0.12em;
+  margin-bottom: 36px;
+  animation: badgePulse 3s ease-in-out infinite;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,179,0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(0,229,179,0); }
+}
+
+.badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: dotBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+#s1 .logo {
+  font-size: clamp(72px, 10vw, 130px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 0%, #fff 35%, var(--teal) 70%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(40px) scale(0.9);
+  filter: drop-shadow(0 0 40px rgba(0,229,179,0.25));
+}
+
+#s1 .tagline {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 400;
+  color: var(--fg-2);
+  max-width: 660px;
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+#s1 .tagline strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+#s1 .stack-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 40px;
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.stack-pill {
+  padding: 5px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.06em;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 2 — PROBLEM
+══════════════════════════════════════ */
+#s2 { gap: 0; }
+
+.slide-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.slide-title {
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 48px;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.compare-card {
+  background: var(--bg-2);
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.compare-card.bad {
+  border-color: rgba(255,107,122,0.2);
+  background: linear-gradient(135deg, rgba(255,107,122,0.04) 0%, var(--bg-2) 100%);
+}
+
+.compare-card.good {
+  border-color: rgba(0,229,179,0.15);
+  background: linear-gradient(135deg, rgba(0,229,179,0.03) 0%, var(--bg-2) 100%);
+}
+
+.compare-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-card.bad .compare-card-title { color: var(--rose); }
+.compare-card.good .compare-card-title { color: var(--teal); }
+
+.compare-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: var(--fg-2);
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.compare-item:last-child { border-bottom: none; }
+
+.compare-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.compare-card.bad .compare-icon { color: var(--rose); }
+.compare-card.good .compare-icon { color: var(--teal); }
+
+/* ══════════════════════════════════════
+   SLIDE 3 — SOLUTION
+══════════════════════════════════════ */
+#s3 { gap: 0; text-align: center; }
+
+.formula-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  max-width: 600px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.formula-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px;
+  width: 100%;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(-20px) scaleY(0.8);
+  transform-origin: top center;
+}
+
+.formula-box {
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: clamp(14px, 1.5vw, 17px);
+  font-weight: 600;
+  min-width: 300px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.formula-box::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.formula-box.bad {
+  background: rgba(255,107,122,0.08);
+  border: 1.5px solid rgba(255,107,122,0.35);
+  color: var(--rose);
+}
+
+.formula-box.good {
+  background: rgba(74,222,128,0.08);
+  border: 1.5px solid rgba(74,222,128,0.35);
+  color: var(--green);
+}
+
+.formula-box.result {
+  background: linear-gradient(135deg, rgba(0,229,179,0.12), rgba(167,139,250,0.08));
+  border: 2px solid var(--teal);
+  color: var(--teal);
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 32px rgba(0,229,179,0.2), 0 0 80px rgba(0,229,179,0.08);
+  animation: resultGlow 3s ease-in-out infinite;
+}
+
+@keyframes resultGlow {
+  0%, 100% { box-shadow: 0 0 24px rgba(0,229,179,0.2), 0 0 60px rgba(0,229,179,0.06); }
+  50%       { box-shadow: 0 0 48px rgba(0,229,179,0.35), 0 0 100px rgba(0,229,179,0.12); }
+}
+
+.formula-op {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--fg-3);
+  line-height: 1;
+}
+
+.formula-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-2), transparent);
+  margin: 4px 0;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 4 — PRODUCT
+══════════════════════════════════════ */
+#s4 { gap: 0; }
+
+.product-mockup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 980px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(30px) scale(0.97);
+}
+
+.mock-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mock-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), var(--violet));
+}
+
+.mock-card.engineer { border-color: rgba(0,229,179,0.2); }
+.mock-card.recruiter { border-color: rgba(167,139,250,0.2); }
+
+.mock-card-header {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mock-card.engineer .mock-card-header { color: var(--teal); }
+.mock-card.recruiter .mock-card-header { color: var(--violet); }
+
+.mock-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--violet));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bg);
+  margin-bottom: 12px;
+  font-family: var(--mono);
+}
+
+.mock-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mock-sub {
+  font-size: 12px;
+  color: var(--fg-3);
+  font-family: var(--mono);
+  margin-bottom: 14px;
+}
+
+.mock-stat-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.mock-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.mock-stat-val {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--teal);
+  font-size: 13px;
+}
+
+.mock-stat-lbl {
+  color: var(--fg-3);
+}
+
+.mock-skills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.mock-skill {
+  padding: 3px 10px;
+  background: rgba(0,229,179,0.08);
+  border: 1px solid rgba(0,229,179,0.2);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+}
+
+.mock-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.25);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--green);
+  margin-top: 6px;
+}
+
+.mock-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-bottom: 8px;
+}
+
+.trust-score {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--green);
+  font-family: var(--mono);
+}
+
+.mock-cta {
+  margin-top: 14px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--teal), var(--violet));
+  border: none;
+  border-radius: 8px;
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.02em;
+}
+
+.product-flow {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.flow-step {
+  color: var(--fg-2);
+}
+
+.flow-arrow {
+  color: var(--teal);
+}
+
+.flow-highlight {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 5 — MARKET
+══════════════════════════════════════ */
+#s5 { gap: 0; text-align: center; }
+
+.market-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.market-card {
+  background: var(--bg-2);
+  border-radius: 20px;
+  padding: 40px 36px;
+  border: 1px solid var(--line-2);
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.85) translateY(20px);
+}
+
+.market-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,179,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.market-card:nth-child(2)::before {
+  background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%);
+}
+
+.market-number {
+  font-size: clamp(48px, 6vw, 80px);
+  font-weight: 900;
+  font-family: var(--mono);
+  color: var(--teal);
+  line-height: 1;
+  margin-bottom: 8px;
+  text-shadow: 0 0 40px rgba(0,229,179,0.4);
+  display: block;
+}
+
+.market-card:nth-child(2) .market-number {
+  color: var(--violet);
+  text-shadow: 0 0 40px rgba(167,139,250,0.4);
+}
+
+.market-label {
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+
+.market-source {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.08em;
+}
+
+.market-bottom {
+  margin-top: 32px;
+  padding: 16px 28px;
+  background: rgba(0,229,179,0.05);
+  border: 1px solid rgba(0,229,179,0.12);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--fg-2);
+  max-width: 580px;
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.market-bottom span { color: var(--teal); font-weight: 600; }
+
+/* ══════════════════════════════════════
+   SLIDE 6 — COMPETITION
+══════════════════════════════════════ */
+#s6 { gap: 0; }
+
+.comp-table {
+  width: 100%;
+  max-width: 920px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+}
+
+.comp-table th {
+  padding: 14px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.comp-table th:first-child {
+  text-align: left;
+  color: var(--fg-3);
+}
+
+.comp-table th.linkedin-col { color: var(--rose); width: 180px; }
+.comp-table th.other-col    { color: var(--amber); width: 180px; }
+.comp-table th.vouchit-col  {
+  color: var(--teal);
+  background: rgba(0,229,179,0.06);
+  width: 200px;
+  position: relative;
+}
+
+.comp-table th.vouchit-col::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), var(--violet));
+}
+
+.comp-table td {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-1);
+  font-size: 13px;
+  vertical-align: middle;
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.comp-table tr:last-child td { border-bottom: none; }
+
+.comp-table td:first-child {
+  color: var(--fg-2);
+  font-weight: 500;
+  text-align: left;
+}
+
+.comp-table td.vouchit-cell {
+  background: rgba(0,229,179,0.04);
+  color: var(--teal);
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.comp-table td:not(:first-child) {
+  text-align: center;
+  color: var(--fg-3);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  font-family: var(--sans);
+}
+.tag-yes {
+  background: rgba(74,222,128,0.10);
+  color: #4ADE80;
+  border: 1px solid rgba(74,222,128,0.18);
+}
+.tag-no {
+  background: rgba(255,255,255,0.03);
+  color: var(--fg-4);
+  border: 1px solid var(--line);
+}
+.tag-partial {
+  background: rgba(255,181,71,0.10);
+  color: var(--amber);
+  border: 1px solid rgba(255,181,71,0.18);
+}
+.tag-vouchit {
+  background: rgba(0,229,179,0.12);
+  color: var(--teal);
+  border: 1px solid rgba(0,229,179,0.25);
+  font-weight: 700;
+}
+
+/* ══════════════════════════════════════
+   SLIDE 7 — BUSINESS MODEL
+══════════════════════════════════════ */
+#s7 { gap: 0; }
+
+.biz-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1000px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* Pricing grid */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.75fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.biz-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 20px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  opacity: 0;
+  transform: translateX(-40px) rotate(-1deg);
+  transition: box-shadow 0.25s, border-color 0.25s;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.biz-card.featured {
+  border-color: rgba(167,139,250,0.35);
+  background: linear-gradient(160deg, rgba(167,139,250,0.06) 0%, var(--bg-2) 60%);
+}
+
+.biz-card.enterprise {
+  background: linear-gradient(160deg, rgba(255,181,71,0.05) 0%, var(--bg-2) 60%);
+  border-color: rgba(255,181,71,0.2);
+}
+
+.biz-card.enterprise .biz-card-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.biz-card.enterprise .biz-ent-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.biz-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+.biz-card:nth-child(1):hover { border-color: rgba(0,229,179,0.4); }
+.biz-card.featured:hover    { border-color: rgba(167,139,250,0.5); }
+.biz-card.enterprise:hover  { border-color: rgba(255,181,71,0.4); }
+
+.biz-card-inner { pointer-events: none; }
+
+.biz-persona-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.biz-persona-badge.dev { background: rgba(0,229,179,0.1); color: var(--teal); }
+.biz-persona-badge.hr  { background: rgba(167,139,250,0.1); color: var(--violet); }
+.biz-persona-badge.ent { background: rgba(255,181,71,0.1); color: var(--amber); }
+
+.biz-tier-row {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 16px;
+}
+.biz-tier { font-size: 13px; font-weight: 600; color: var(--fg-2); }
+.biz-price {
+  font-size: clamp(13px, 1.8vw, 20px); font-weight: 900;
+  font-family: var(--mono); color: var(--fg); line-height: 1;
+}
+.biz-price .pro-dev { color: var(--teal); }
+.biz-price .pro-hr  { color: var(--violet); }
+.biz-price .ent-pr  { color: var(--amber); }
+
+.biz-features {
+  list-style: none; padding: 0; margin: 0;
+  border-top: 1px solid var(--line); padding-top: 14px;
+}
+.biz-features li {
+  font-size: 12px; color: var(--fg-3); line-height: 1.5;
+  padding: 4px 0; display: flex; gap: 8px; align-items: flex-start;
+}
+.biz-features li .fi { flex-shrink: 0; margin-top: 1px; }
+.biz-features li .fi.ok { color: var(--green); }
+.biz-features li .fi.dim { color: var(--fg-4); }
+
+.biz-sep {
+  text-align: center; font-size: 10px; font-family: var(--mono);
+  color: var(--fg-4); letter-spacing: 0.1em; padding: 8px 0;
+}
+
+.biz-cta {
+  margin-top: 16px; padding: 9px 0; width: 100%;
+  border-radius: 8px; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em; border: 1px solid;
+  cursor: default;
+}
+.biz-cta.dev { background: rgba(0,229,179,0.12); color: var(--teal); border-color: rgba(0,229,179,0.3); }
+.biz-cta.hr  { background: rgba(167,139,250,0.12); color: var(--violet); border-color: rgba(167,139,250,0.3); }
+.biz-cta.ent { background: rgba(255,181,71,0.1); color: var(--amber); border-color: rgba(255,181,71,0.25); }
+
+.biz-ent-title { font-size: 18px; font-weight: 800; color: var(--fg); margin-bottom: 8px; }
+.biz-ent-price { font-family: var(--mono); font-size: 22px; font-weight: 900; color: var(--amber); margin-bottom: 12px; }
+.biz-ent-desc  { font-size: 12px; color: var(--fg-3); line-height: 1.6; }
+
+/* ══════════════════════════════════════
+   SLIDE 8 — TEAM & ROADMAP
+══════════════════════════════════════ */
+#s8 { gap: 0; }
+
+.team-roadmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 24px;
+  max-width: 960px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.team-card {
+  background: var(--bg-2);
+  border: 1px solid rgba(0,229,179,0.2);
+  border-radius: 20px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-30px) rotate(-0.5deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), transparent);
+}
+
+.team-card-header {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.team-item {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.5;
+}
+
+.team-item-icon { display: none; }
+
+.team-stack-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.team-tech {
+  padding: 4px 10px;
+  background: rgba(0,229,179,0.06);
+  border: 1px solid rgba(0,229,179,0.15);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+}
+
+.roadmap-col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: 100%;
+}
+
+.roadmap-col { position: relative; }
+
+/* connecting line between cards */
+.roadmap-col::before {
+  content: '';
+  position: absolute;
+  top: 36px;
+  left: calc(25% - 1px);
+  right: calc(25% - 1px);
+  height: 1px;
+  background: linear-gradient(90deg, var(--teal), var(--violet), var(--amber), var(--rose));
+  opacity: 0.25;
+  z-index: 0;
+}
+
+.roadmap-item {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.2s;
+  z-index: 1;
+}
+
+.roadmap-item:hover { transform: translateY(-4px); }
+
+.roadmap-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.roadmap-item:nth-child(1) { border-color: rgba(0,229,179,0.2); }
+.roadmap-item:nth-child(2) { border-color: rgba(167,139,250,0.2); }
+.roadmap-item:nth-child(3) { border-color: rgba(255,181,71,0.2); }
+.roadmap-item:nth-child(4) { border-color: rgba(255,107,122,0.2); }
+
+.roadmap-item:nth-child(1)::before { background: var(--teal); }
+.roadmap-item:nth-child(2)::before { background: var(--violet); }
+.roadmap-item:nth-child(3)::before { background: var(--amber); }
+.roadmap-item:nth-child(4)::before { background: var(--rose); }
+
+.roadmap-item:nth-child(1) { background: linear-gradient(160deg, rgba(0,229,179,0.04) 0%, var(--bg-2) 50%); }
+.roadmap-item:nth-child(2) { background: linear-gradient(160deg, rgba(167,139,250,0.04) 0%, var(--bg-2) 50%); }
+.roadmap-item:nth-child(3) { background: linear-gradient(160deg, rgba(255,181,71,0.04) 0%, var(--bg-2) 50%); }
+.roadmap-item:nth-child(4) { background: linear-gradient(160deg, rgba(255,107,122,0.04) 0%, var(--bg-2) 50%); }
+
+.roadmap-phase-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.roadmap-item:nth-child(1) .roadmap-phase-num { color: var(--teal); }
+.roadmap-item:nth-child(2) .roadmap-phase-num { color: var(--violet); }
+.roadmap-item:nth-child(3) .roadmap-phase-num { color: var(--amber); }
+.roadmap-item:nth-child(4) .roadmap-phase-num { color: var(--rose); }
+
+.roadmap-month {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  margin-bottom: 14px;
+}
+
+.roadmap-content-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.roadmap-features {
+  list-style: none;
+  padding: 0; margin: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.roadmap-features li {
+  font-size: 11px;
+  color: var(--fg-3);
+  line-height: 1.5;
+  padding: 3px 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.roadmap-features li::before {
+  content: '–';
+  flex-shrink: 0;
+  color: var(--fg-4);
+}
+
+/* ══════════════════════════════════════
+   PROGRESS BAR
+══════════════════════════════════════ */
+#progress-bar {
+  position: fixed;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), var(--violet));
+  z-index: 200;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(0,229,179,0.5);
+}
+
+/* ══════════════════════════════════════
+   PRESENTER NOTES PANEL
+══════════════════════════════════════ */
+#notes-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(7, 8, 15, 0.96);
+  border-top: 1px solid var(--line-2);
+  backdrop-filter: blur(20px);
+  z-index: 300;
+  padding: 18px 40px 20px;
+  display: none;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+#notes-panel.visible { display: flex; }
+
+.notes-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.notes-slide-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.notes-timer {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.notes-timer-label {
+  font-size: 10px;
+  color: var(--fg-3);
+  letter-spacing: 0.08em;
+  font-family: var(--mono);
+}
+
+.notes-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line-2);
+  flex-shrink: 0;
+}
+
+.notes-content {
+  flex: 1;
+}
+
+.notes-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.notes-body {
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.7;
+}
+
+.notes-body .nt-tip {
+  display: inline-block;
+  background: rgba(0,229,179,0.08);
+  border: 1px solid rgba(0,229,179,0.2);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--teal);
+  margin-right: 6px;
+}
+
+.notes-body .nt-warn {
+  display: inline-block;
+  background: rgba(255,181,71,0.08);
+  border: 1px solid rgba(255,181,71,0.2);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber);
+  margin-right: 6px;
+}
+
+.notes-body .nt-q {
+  color: var(--violet);
+  font-style: italic;
+}
+
+.notes-body ul {
+  margin: 6px 0 0 0;
+  padding-left: 16px;
+}
+
+.notes-body ul li {
+  margin-bottom: 3px;
+}
+
+.notes-hint {
+  position: fixed;
+  bottom: 28px; left: 32px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  z-index: 100;
+  letter-spacing: 0.05em;
+  transition: opacity 0.3s;
+}
+
+#fs-hint { display: none; }
+
+/* Slide 9 (demo) styling */
+#s9 { gap: 0; text-align: center; }
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 960px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.demo-step {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  padding: 24px 18px 20px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.demo-step::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.demo-step:nth-child(1) { border-color: rgba(0,229,179,0.25); }
+.demo-step:nth-child(2) { border-color: rgba(167,139,250,0.25); }
+.demo-step:nth-child(3) { border-color: rgba(74,222,128,0.25); }
+.demo-step:nth-child(4) { border-color: rgba(255,181,71,0.25); }
+
+.demo-step:nth-child(1)::before { background: var(--teal); }
+.demo-step:nth-child(2)::before { background: var(--violet); }
+.demo-step:nth-child(3)::before { background: var(--green); }
+.demo-step:nth-child(4)::before { background: var(--amber); }
+
+.demo-step-num {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.demo-step:nth-child(1) .demo-step-num { color: var(--teal); }
+.demo-step:nth-child(2) .demo-step-num { color: var(--violet); }
+.demo-step:nth-child(3) .demo-step-num { color: var(--green); }
+.demo-step:nth-child(4) .demo-step-num { color: var(--amber); }
+
+.demo-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 10px;
+}
+
+.demo-step-desc {
+  font-size: 12px;
+  color: var(--fg-3);
+  line-height: 1.6;
+}
+
+.demo-url {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: rgba(0,229,179,0.06);
+  border: 1px solid rgba(0,229,179,0.2);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--teal);
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE TWEAKS
+══════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .compare-grid, .product-mockup, .market-grid,
+  .pricing-grid, .biz-grid, .team-roadmap-grid { gap: 12px; }
+  .pricing-grid { grid-template-columns: 1fr 1fr 0.65fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Progress bar -->
+<div id="progress-bar"></div>
+
+<!-- Slide counter -->
+<div id="slide-counter">1 / 8</div>
+
+<!-- Fullscreen hint -->
+<div id="fs-hint">F — fullscreen</div>
+
+<!-- ════════════════════════════════════
+     DECK
+════════════════════════════════════ -->
+<div id="deck">
+
+  <!-- ─── SLIDE 1: COVER ─── -->
+  <div class="slide" id="s1">
+    <div class="beta-badge" id="badge">
+      <div class="badge-dot"></div>
+      Beta &nbsp;·&nbsp; 2025
+    </div>
+    <h1 class="logo" id="logo-text">VouchIT</h1>
+    <p class="tagline" id="tagline-text">
+      Yazılım mühendisleri için <strong>gürültüden arındırılmış,</strong><br>
+      liyakat odaklı <strong>yeni nesil profesyonel ağ</strong>
+    </p>
+    <div class="stack-pills" id="stack-pills">
+      <span class="stack-pill">Next.js 16</span>
+      <span class="stack-pill">Hono.js</span>
+      <span class="stack-pill">GPT-4o</span>
+      <span class="stack-pill">Drizzle ORM</span>
+      <span class="stack-pill">PostgreSQL</span>
+      <span class="stack-pill">GitHub API</span>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 2: PROBLEM ─── -->
+  <div class="slide" id="s2">
+    <div class="slide-label" id="s2-label">02 — Problem</div>
+    <h2 class="slide-title" id="s2-title">Mevcut Durumun Gerçeği</h2>
+    <div class="compare-grid">
+      <div class="compare-card bad" id="s2-card-l">
+        <div class="compare-card-title">
+          <span>✗</span> LinkedIn &amp; Benzer Platformlar
+        </div>
+        <div class="compare-item" data-delay="0">
+          <span class="compare-icon">✗</span>
+          <span>Endüstriyel spam ve marketing gürültüsü</span>
+        </div>
+        <div class="compare-item" data-delay="1">
+          <span class="compare-icon">✗</span>
+          <span>Gerçek yetkinlik, sahte sertifikalar arasında kaybolmuş</span>
+        </div>
+        <div class="compare-item" data-delay="2">
+          <span class="compare-icon">✗</span>
+          <span>İK'nın doğru yeteneği bulması gittikçe zorlaşıyor</span>
+        </div>
+      </div>
+      <div class="compare-card good" id="s2-card-r">
+        <div class="compare-card-title">
+          <span>→</span> Yazılım Mühendislerinin Sorunu
+        </div>
+        <div class="compare-item" data-delay="3">
+          <span class="compare-icon">→</span>
+          <span>Profil = biyografi, hobi, siyaset, meme paylaşımları</span>
+        </div>
+        <div class="compare-item" data-delay="4">
+          <span class="compare-icon">→</span>
+          <span>Gerçek teknik yeteneklerini gösteremiyorlar</span>
+        </div>
+        <div class="compare-item" data-delay="5">
+          <span class="compare-icon">→</span>
+          <span>Kaliteli işe alım fırsatlarına erişemiyorlar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 3: SOLUTION ─── -->
+  <div class="slide" id="s3">
+    <div class="slide-label" id="s3-label">03 — Çözüm</div>
+    <h2 class="slide-title" id="s3-title">VouchIT Çözüm Formülü</h2>
+    <div class="formula-stack">
+      <div class="formula-row" id="f1">
+        <div class="formula-box bad">✗ &nbsp; Sosyal Medya Gürültüsü</div>
+      </div>
+      <div class="formula-row" id="f2" style="padding: 4px 0;">
+        <span class="formula-op">+</span>
+      </div>
+      <div class="formula-row" id="f3">
+        <div class="formula-box good">✓ &nbsp; Sadece Teknik Yetkinlik &amp; Doğrulama</div>
+      </div>
+      <div class="formula-row" id="f4" style="padding: 4px 0;">
+        <span class="formula-op">+</span>
+      </div>
+      <div class="formula-row" id="f5">
+        <div class="formula-box good">✓ &nbsp; Doğrudan Profesyonel Eşleştirme</div>
+      </div>
+      <div class="formula-row" id="f6" style="padding: 10px 0;">
+        <span class="formula-op">=</span>
+      </div>
+      <div class="formula-row" id="f7">
+        <div class="formula-box result">⚡ &nbsp; VouchIT</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 4: PRODUCT ─── -->
+  <div class="slide" id="s4">
+    <div class="slide-label" id="s4-label">04 — Ürün</div>
+    <h2 class="slide-title" id="s4-title">Platform — Nasıl Çalışır?</h2>
+    <div class="product-mockup" id="s4-mockup">
+      <!-- Engineer side -->
+      <div class="mock-card engineer">
+        <div class="mock-card-header">⚡ Mühendis Profili</div>
+        <div class="mock-avatar">AK</div>
+        <div class="mock-name">Ahmet Kaya</div>
+        <div class="mock-sub">Senior Full-Stack Engineer · İstanbul</div>
+        <div class="mock-stat-row">
+          <div class="mock-stat">
+            <span class="mock-stat-val">847</span>
+            <span class="mock-stat-lbl">GitHub Commits</span>
+          </div>
+          <div class="mock-stat">
+            <span class="mock-stat-val">2100</span>
+            <span class="mock-stat-lbl">LeetCode</span>
+          </div>
+        </div>
+        <div class="mock-stat-row">
+          <div class="mock-stat">
+            <span class="mock-stat-val">12</span>
+            <span class="mock-stat-lbl">Vouch Aldı</span>
+          </div>
+        </div>
+        <div class="mock-verified">
+          <span>✓</span> AI Doğrulanmış Projeler
+        </div>
+        <div class="mock-skills">
+          <span class="mock-skill">React</span>
+          <span class="mock-skill">Node.js</span>
+          <span class="mock-skill">PostgreSQL</span>
+          <span class="mock-skill">TypeScript</span>
+        </div>
+      </div>
+      <!-- Recruiter side -->
+      <div class="mock-card recruiter">
+        <div class="mock-card-header">🎯 İK Bakış Açısı</div>
+        <div class="mock-filter-row">
+          <span>React · 5+ yıl · Remote</span>
+          <span style="color: var(--violet); font-size: 11px;">Filtrele →</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px;">
+          <div>
+            <div style="font-size: 11px; color: var(--fg-3); margin-bottom: 4px;">Güven Skoru</div>
+            <div class="trust-score">98%</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size: 11px; color: var(--fg-3); margin-bottom: 4px;">Proje Referansları</div>
+            <div style="font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--violet);">4 Doğrulandı</div>
+          </div>
+        </div>
+        <div style="font-size: 12px; color: var(--fg-3); margin-bottom: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Önerilen Adaylar</div>
+        <div class="mock-filter-row" style="margin-bottom: 6px;">
+          <span>Ahmet K. — React/Node</span>
+          <span style="color: var(--green); font-family: var(--mono); font-size: 11px;">98%</span>
+        </div>
+        <div class="mock-filter-row" style="margin-bottom: 6px;">
+          <span>Zeynep T. — TypeScript</span>
+          <span style="color: var(--green); font-family: var(--mono); font-size: 11px;">94%</span>
+        </div>
+        <div class="mock-filter-row" style="margin-bottom: 0;">
+          <span>Mert S. — Full-Stack</span>
+          <span style="color: var(--amber); font-family: var(--mono); font-size: 11px;">88%</span>
+        </div>
+        <button class="mock-cta">İletişime Geç →</button>
+      </div>
+    </div>
+    <div class="product-flow" id="s4-flow">
+      <span class="flow-step">CV</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-highlight">GPT-4o analiz</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">GitHub cross-check</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-highlight">Doğrulanmış Profil</span>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 5: MARKET ─── -->
+  <div class="slide" id="s5">
+    <div class="slide-label" id="s5-label">05 — Pazar</div>
+    <h2 class="slide-title" id="s5-title">Pazar Potansiyeli</h2>
+    <div class="market-grid">
+      <div class="market-card" id="m-card-1">
+        <span class="market-number" data-target="30" data-suffix="M+">0</span>
+        <div class="market-label">Yazılım Mühendisi</div>
+        <div style="font-size: 13px; color: var(--fg-2); margin-bottom: 8px;">Dünya Çapında</div>
+        <div class="market-source">Stack Overflow Survey 2024</div>
+      </div>
+      <div class="market-card" id="m-card-2">
+        <span class="market-number" data-target="1.4" data-suffix="M" data-float="true">0</span>
+        <div class="market-label">Açık Pozisyon</div>
+        <div style="font-size: 13px; color: var(--fg-2); margin-bottom: 8px;">ABD + Avrupa</div>
+        <div class="market-source">McKinsey Tech Talent Survey</div>
+      </div>
+    </div>
+    <div class="market-bottom" id="market-bottom">
+      Toplam adreslenebilir pazar: <span>$4.2B+</span> — ve yazılım mühendisi talebi her yıl <span>%25 büyüyor</span>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 6: COMPETITION ─── -->
+  <div class="slide" id="s6">
+    <div class="slide-label" id="s6-label">06 — Rekabet</div>
+    <h2 class="slide-title" id="s6-title">Neden VouchIT?</h2>
+    <table class="comp-table" id="comp-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Özellik</th>
+          <th class="linkedin-col">LinkedIn / Diğerleri</th>
+          <th class="other-col">GitHub Jobs</th>
+          <th class="vouchit-col">VouchIT ⚡</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sosyal Medya Gürültüsü</td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td><span class="tag tag-yes">Yok</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">Tamamen Yok</span></td>
+        </tr>
+        <tr>
+          <td>Doğrulanmış Yetkinlik</td>
+          <td><span class="tag tag-partial">Kısmi</span></td>
+          <td><span class="tag tag-partial">Basit</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">AI Destekli</span></td>
+        </tr>
+        <tr>
+          <td>Vouch / Referans Sistemi</td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">Var</span></td>
+        </tr>
+        <tr>
+          <td>Mühendis Odaklı</td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td><span class="tag tag-partial">Kısmi</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">Var</span></td>
+        </tr>
+        <tr>
+          <td>GitHub × CV Cross-check</td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">Benzersiz</span></td>
+        </tr>
+        <tr>
+          <td>Doğrudan İK Entegrasyonu</td>
+          <td><span class="tag tag-no">Yok</span></td>
+          <td><span class="tag tag-yes">Var</span></td>
+          <td class="vouchit-cell"><span class="tag tag-vouchit">Var</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── SLIDE 7: BUSINESS MODEL ─── -->
+  <div class="slide" id="s7">
+    <div class="slide-label" id="s7-label">07 — İş Modeli</div>
+    <h2 class="slide-title" id="s7-title">Herkes İçin <span style="color:var(--teal)">Premium</span></h2>
+    <div class="pricing-grid">
+
+      <!-- Developer -->
+      <div class="biz-card" id="biz-1">
+        <div class="biz-card-inner">
+          <div class="biz-persona-badge dev">👨‍💻 Developer</div>
+          <div class="biz-tier-row">
+            <span class="biz-price"><span class="pro-dev">$9.99</span><span style="font-size:11px;color:var(--fg-3)">/ay</span></span>
+          </div>
+          <ul class="biz-features">
+            <li><span class="fi ok">✓</span>Verified profil · GitHub kanıtları</li>
+            <li><span class="fi ok">✓</span>AI kariyer yol haritası</li>
+            <li><span class="fi ok">✓</span>Spaces'te öncelikli görünürlük</li>
+            <li><span class="fi ok">✓</span>Skill eşleşme analizi</li>
+          </ul>
+          <button class="biz-cta dev">Developer →</button>
+        </div>
+      </div>
+
+      <!-- HR / Recruiter -->
+      <div class="biz-card featured" id="biz-2">
+        <div class="biz-card-inner">
+          <div class="biz-persona-badge hr">👔 HR / Recruiter</div>
+          <div class="biz-tier-row">
+            <span class="biz-price"><span class="pro-hr">$49</span><span style="font-size:11px;color:var(--fg-3)">/ay</span></span>
+          </div>
+          <ul class="biz-features">
+            <li><span class="fi ok">✓</span>Tüm profillere tam erişim</li>
+            <li><span class="fi ok">✓</span>Shortlist · Gelişmiş filtreler</li>
+            <li><span class="fi ok">✓</span>AI Reach Out mesaj taslakları</li>
+            <li><span class="fi ok">✓</span>Kanıt bazlı aday puanlama</li>
+            <li><span class="fi ok">✓</span>Recruiter dashboard + raporlar</li>
+          </ul>
+          <button class="biz-cta hr">HR / Recruiter →</button>
+        </div>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="biz-card enterprise" id="biz-3">
+        <div class="biz-card-inner">
+          <div class="biz-persona-badge ent">🏢 Enterprise</div>
+          <div class="biz-ent-middle">
+            <div class="biz-ent-price">Custom</div>
+            <div class="biz-ent-desc">API entegrasyonu · Bulk hiring · Kurumsal sözleşmeler · SLA garantisi · Özel onboarding</div>
+            <ul class="biz-features" style="margin-top:14px;">
+              <li><span class="fi ok">✓</span>Sınırsız kullanıcı</li>
+              <li><span class="fi ok">✓</span>SSO · SAML entegrasyonu</li>
+              <li><span class="fi ok">✓</span>Öncelikli destek</li>
+            </ul>
+          </div>
+          <button class="biz-cta ent">Teklif Al →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 8: TEAM & ROADMAP ─── -->
+  <div class="slide" id="s8">
+    <div class="slide-label" id="s8-label">08 — Ekip &amp; Yol Haritası</div>
+    <h2 class="slide-title" id="s8-title">Yol Haritası</h2>
+    <div class="team-roadmap-grid" style="grid-template-columns: 1fr;">
+      <div class="roadmap-col" id="roadmap-col" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="roadmap-item">
+          <div class="roadmap-phase-num">01</div>
+          <div class="roadmap-month">Şimdi</div>
+          <div class="roadmap-content-title">MVP — Doğrulanmış Profil</div>
+          <ul class="roadmap-features">
+            <li>CV → AI analiz → GitHub cross-check</li>
+            <li>Dual-view toggle (Developer / HR)</li>
+            <li>Verified &amp; Standard tier</li>
+            <li>Spaces feed</li>
+          </ul>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-phase-num">02</div>
+          <div class="roadmap-month">Yaz 2025</div>
+          <div class="roadmap-content-title">Recruiter Araçları</div>
+          <ul class="roadmap-features">
+            <li>AI Reach Out mesaj taslakları</li>
+            <li>Recruiter dashboard + shortlist</li>
+            <li>Figma / Medium / Kaggle entegrasyonu</li>
+          </ul>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-phase-num">03</div>
+          <div class="roadmap-month">Son 2025</div>
+          <div class="roadmap-content-title">Skill Challenge + Topluluk</div>
+          <ul class="roadmap-features">
+            <li>Canlı 5 dk coding challenge</li>
+            <li>AI tabanlı değerlendirme</li>
+            <li>Edge AI on-device moderasyon</li>
+          </ul>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-phase-num">04</div>
+          <div class="roadmap-month">2026</div>
+          <div class="roadmap-content-title">Decentralized Identity</div>
+          <ul class="roadmap-features">
+            <li>P2P kimlik — kullanıcı kendi verisini taşır</li>
+            <li>Proaktif iş önerisi algoritması</li>
+            <li>Yeteneğe göre akıllı eşleştirme</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 9: DEMO ─── -->
+  <div class="slide" id="s9">
+    <div class="slide-label" id="s9-label">09 — Canlı Demo</div>
+    <h2 class="slide-title" id="s9-title">Şimdi Görelim</h2>
+    <div class="demo-grid">
+      <div class="demo-step">
+        <div class="demo-step-num">01</div>
+        <div class="demo-step-title">GitHub ile Giriş</div>
+        <div class="demo-step-desc">OAuth ile kimlik doğrulama — token otomatik alınır</div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">02</div>
+        <div class="demo-step-title">CV Yükle</div>
+        <div class="demo-step-desc">PDF yükle → GPT-4o analiz başlar</div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">03</div>
+        <div class="demo-step-title">AI Doğrulama</div>
+        <div class="demo-step-desc">GitHub repo'ları × CV cross-check → Güven skoru</div>
+      </div>
+      <div class="demo-step">
+        <div class="demo-step-num">04</div>
+        <div class="demo-step-title">Profil &amp; Feed</div>
+        <div class="demo-step-desc">Doğrulanmış profil + Spaces topluluğu</div>
+      </div>
+    </div>
+    <div class="demo-url" id="demo-url">⚡ localhost:3000</div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Presenter notes panel -->
+<div id="notes-panel">
+  <div class="notes-meta">
+    <div class="notes-slide-num" id="notes-slide-num">Slide 01</div>
+    <div class="notes-timer" id="notes-timer">0:30</div>
+    <div class="notes-timer-label">hedef süre</div>
+  </div>
+  <div class="notes-divider"></div>
+  <div class="notes-content">
+    <div class="notes-title" id="notes-title"></div>
+    <div class="notes-body" id="notes-body"></div>
+  </div>
+</div>
+
+<!-- Dot navigation -->
+<div id="dots">
+  <div class="dot active" data-i="0"></div>
+  <div class="dot" data-i="1"></div>
+  <div class="dot" data-i="2"></div>
+  <div class="dot" data-i="3"></div>
+  <div class="dot" data-i="4"></div>
+  <div class="dot" data-i="5"></div>
+  <div class="dot" data-i="6"></div>
+  <div class="dot" data-i="7"></div>
+  <div class="dot" data-i="8"></div>
+</div>
+
+<!-- Keyboard hint -->
+<div class="notes-hint" id="keys-hint">← → gezin &nbsp;·&nbsp; N notlar &nbsp;·&nbsp; F tam ekran</div>
+
+<!-- Nav buttons -->
+<div id="nav-btns">
+  <button class="nav-btn" id="prev-btn">‹</button>
+  <button class="nav-btn" id="next-btn">›</button>
+</div>
+
+<script>
+
+/* ══════════════════════════════════════
+   SLIDE SYSTEM
+══════════════════════════════════════ */
+const TOTAL = 9;
+let current = 0;
+let animating = false;
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dots   = Array.from(document.querySelectorAll('.dot'));
+const counter = document.getElementById('slide-counter');
+const progressBar = document.getElementById('progress-bar');
+
+function updateUI(idx) {
+  counter.textContent = `${idx + 1} / ${TOTAL}`;
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  progressBar.style.width = `${((idx + 1) / TOTAL) * 100}%`;
+}
+
+function goTo(idx) {
+  if (animating || idx === current || idx < 0 || idx >= TOTAL) return;
+  animating = true;
+
+  const prev = slides[current];
+  const next = slides[idx];
+
+  prev.classList.add('leaving');
+  next.classList.add('entering');
+
+  setTimeout(() => {
+    prev.classList.remove('active', 'leaving', 'entered');
+    next.classList.remove('entering');
+    // Clear any residual inline styles so CSS .active can take effect
+    next.style.opacity = '';
+    next.style.transform = '';
+    next.style.filter = '';
+    next.classList.add('active');
+
+    current = idx;
+    updateUI(idx);
+
+    requestAnimationFrame(() => {
+      next.classList.add('entered');
+      runSlideAnim(idx);
+      setTimeout(() => {
+        next.classList.remove('entered');
+        animating = false;
+      }, 500);
+    });
+  }, 130);
+}
+
+/* ══════════════════════════════════════
+   SLIDE-SPECIFIC ANIMATIONS
+══════════════════════════════════════ */
+function animateIn(el, delay, props = {}) {
+  if (!el) return;
+  el.style.transition = 'none';
+  el.style.opacity = '0';
+  if (props.x) el.style.transform = `translateX(${props.x}px)`;
+  if (props.y) el.style.transform = `translateY(${props.y}px)`;
+  if (props.scale) el.style.transform = `scale(${props.scale})`;
+  if (props.custom) el.style.transform = props.custom;
+
+  setTimeout(() => {
+    el.style.transition = `opacity 0.55s cubic-bezier(0.16,1,0.3,1) ${delay}ms,
+                            transform 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}ms`;
+    el.style.opacity = '1';
+    el.style.transform = 'none';
+  }, 30);
+}
+
+function runSlideAnim(idx) {
+  if (idx === 0) animSlide1();
+  if (idx === 1) animSlide2();
+  if (idx === 2) animSlide3();
+  if (idx === 3) animSlide4();
+  if (idx === 4) animSlide5();
+  if (idx === 5) animSlide6();
+  if (idx === 6) animSlide7();
+  if (idx === 7) animSlide8();
+  if (idx === 8) animSlide9();
+}
+
+/* — Slide 1 — */
+function animSlide1() {
+  const badge   = document.getElementById('badge');
+  const logo    = document.getElementById('logo-text');
+  const tagline = document.getElementById('tagline-text');
+  const pills   = document.getElementById('stack-pills');
+
+  animateIn(badge,   0,  { custom: 'translateY(30px)' });
+  animateIn(logo,    150, { custom: 'translateY(40px) scale(0.88)' });
+  animateIn(tagline, 380, { y: 20 });
+  animateIn(pills,   560, { y: 16 });
+}
+
+/* — Slide 2 — */
+function animSlide2() {
+  animateIn(document.getElementById('s2-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s2-title'), 80, { y: 20 });
+
+  const cardL = document.getElementById('s2-card-l');
+  const cardR = document.getElementById('s2-card-r');
+  animateIn(cardL, 200, { y: 30 });
+  animateIn(cardR, 300, { y: 30 });
+
+  const items = document.querySelectorAll('#s2 .compare-item');
+  items.forEach((el, i) => {
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-16px)';
+    setTimeout(() => {
+      el.style.transition = `opacity 0.5s ease ${i * 140 + 350}ms, transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 140 + 350}ms`;
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    }, 30);
+  });
+}
+
+/* — Slide 3 — */
+function animSlide3() {
+  animateIn(document.getElementById('s3-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s3-title'), 80, { y: 20 });
+
+  const rows = ['f1','f2','f3','f4','f5','f6','f7'];
+  rows.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-18px) scaleY(0.7)';
+    el.style.transformOrigin = 'top center';
+    setTimeout(() => {
+      el.style.transition = `opacity 0.45s cubic-bezier(0.16,1,0.3,1) ${i * 250 + 200}ms,
+                              transform 0.5s cubic-bezier(0.34,1.56,0.64,1) ${i * 250 + 200}ms`;
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    }, 30);
+  });
+}
+
+/* — Slide 4 — */
+function animSlide4() {
+  animateIn(document.getElementById('s4-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s4-title'), 80, { y: 20 });
+  animateIn(document.getElementById('s4-mockup'), 200, { custom: 'translateY(30px) scale(0.96)' });
+  animateIn(document.getElementById('s4-flow'),   500, { y: 10 });
+}
+
+/* — Slide 5 — */
+function animSlide5() {
+  animateIn(document.getElementById('s5-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s5-title'), 80, { y: 20 });
+
+  const card1 = document.getElementById('m-card-1');
+  const card2 = document.getElementById('m-card-2');
+
+  card1.style.transition = 'none';
+  card1.style.opacity = '0';
+  card1.style.transform = 'scale(0.82) translateY(20px)';
+  card2.style.transition = 'none';
+  card2.style.opacity = '0';
+  card2.style.transform = 'scale(0.82) translateY(20px)';
+
+  setTimeout(() => {
+    card1.style.transition = 'opacity 0.6s cubic-bezier(0.16,1,0.3,1) 200ms, transform 0.7s cubic-bezier(0.34,1.56,0.64,1) 200ms';
+    card1.style.opacity = '1';
+    card1.style.transform = 'none';
+  }, 30);
+
+  setTimeout(() => {
+    card2.style.transition = 'opacity 0.6s cubic-bezier(0.16,1,0.3,1) 350ms, transform 0.7s cubic-bezier(0.34,1.56,0.64,1) 350ms';
+    card2.style.opacity = '1';
+    card2.style.transform = 'none';
+  }, 30);
+
+  // Counter animations
+  setTimeout(() => {
+    animateCounter(card1.querySelector('.market-number'));
+    animateCounter(card2.querySelector('.market-number'));
+  }, 500);
+
+  const bottom = document.getElementById('market-bottom');
+  animateIn(bottom, 700, { y: 16 });
+}
+
+const counterRAFs = new Map();
+
+function animateCounter(el) {
+  if (!el) return;
+  const target = parseFloat(el.dataset.target);
+  const suffix = el.dataset.suffix || '';
+  const isFloat = el.dataset.float === 'true';
+  const duration = 1100;
+
+  // Cancel any running animation on this element
+  if (counterRAFs.has(el)) {
+    cancelAnimationFrame(counterRAFs.get(el));
+    counterRAFs.delete(el);
+  }
+
+  // Reset to zero before starting
+  el.textContent = isFloat ? `~0.0${suffix}` : `~0${suffix}`;
+
+  const start = performance.now();
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = target * easeOut(progress);
+    el.textContent = isFloat
+      ? `~${value.toFixed(1)}${suffix}`
+      : `~${Math.round(value)}${suffix}`;
+    if (progress < 1) {
+      counterRAFs.set(el, requestAnimationFrame(tick));
+    } else {
+      el.textContent = `~${target}${suffix}`;
+      counterRAFs.delete(el);
+    }
+  }
+  counterRAFs.set(el, requestAnimationFrame(tick));
+}
+
+/* — Slide 6 — */
+function animSlide6() {
+  animateIn(document.getElementById('s6-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s6-title'), 80, { y: 20 });
+
+  const rows = document.querySelectorAll('#comp-table tbody tr');
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll('td');
+    cells.forEach(cell => {
+      cell.style.transition = 'none';
+      cell.style.opacity = '0';
+      cell.style.transform = 'translateX(-12px)';
+    });
+    setTimeout(() => {
+      cells.forEach(cell => {
+        cell.style.transition = `opacity 0.45s ease ${i * 140 + 200}ms,
+                                  transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 140 + 200}ms`;
+        cell.style.opacity = '1';
+        cell.style.transform = 'none';
+      });
+    }, 30);
+  });
+}
+
+/* — Slide 7 — */
+function animSlide7() {
+  animateIn(document.getElementById('s7-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s7-title'), 80, { y: 20 });
+
+  ['biz-1','biz-2','biz-3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = `translateX(-50px) rotate(-1deg)`;
+    setTimeout(() => {
+      el.style.transition = `opacity 0.55s cubic-bezier(0.16,1,0.3,1) ${i * 180 + 200}ms,
+                              transform 0.65s cubic-bezier(0.34,1.56,0.64,1) ${i * 180 + 200}ms,
+                              box-shadow 0.25s ease, border-color 0.25s ease`;
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    }, 30);
+  });
+
+  // 3D tilt setup
+  setup3DTilt();
+}
+
+function setup3DTilt() {
+  document.querySelectorAll('.biz-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / (rect.width / 2);
+      const dy = (e.clientY - cy) / (rect.height / 2);
+      const rx = dy * -8;
+      const ry = dx * 8;
+      card.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(6px) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateZ(0) scale(1)';
+      card.style.transition = 'transform 0.5s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease';
+    });
+    card.addEventListener('mouseenter', () => {
+      card.style.transition = 'transform 0.1s ease, box-shadow 0.25s ease, border-color 0.25s ease';
+    });
+  });
+}
+
+/* — Slide 8 — */
+function animSlide8() {
+  animateIn(document.getElementById('s8-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s8-title'), 80, { y: 20 });
+
+  const items = document.querySelectorAll('#roadmap-col .roadmap-item');
+  items.forEach((el, i) => {
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    setTimeout(() => {
+      el.style.transition = `opacity 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 120 + 200}ms, transform 0.6s cubic-bezier(0.34,1.56,0.64,1) ${i * 120 + 200}ms`;
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    }, 30);
+  });
+}
+
+/* — Slide 9 — */
+function animSlide9() {
+  animateIn(document.getElementById('s9-label'), 0, { x: -20 });
+  animateIn(document.getElementById('s9-title'), 80, { y: 20 });
+
+  const steps = document.querySelectorAll('#s9 .demo-step');
+  steps.forEach((el, i) => {
+    el.style.transition = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      el.style.transition = `opacity 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 130 + 200}ms, transform 0.6s cubic-bezier(0.34,1.56,0.64,1) ${i * 130 + 200}ms`;
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    }, 30);
+  });
+
+  animateIn(document.getElementById('demo-url'), 750, { y: 10 });
+}
+
+/* ══════════════════════════════════════
+   INIT FIRST SLIDE
+══════════════════════════════════════ */
+slides[0].classList.add('active');
+updateUI(0);
+setTimeout(() => animSlide1(), 100);
+
+/* ══════════════════════════════════════
+   KEYBOARD & BUTTON CONTROLS
+══════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    goTo(current + 1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    goTo(current - 1);
+  } else if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+});
+
+document.getElementById('prev-btn').addEventListener('click', () => goTo(current - 1));
+document.getElementById('next-btn').addEventListener('click', () => goTo(current + 1));
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => goTo(parseInt(dot.dataset.i)));
+});
+
+/* Touch swipe */
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
+});
+</script>
+</body>
+</html>
